@@ -1,0 +1,2976 @@
+//core_synchronize_structure_v1.7.0
+(() => {
+  // workspace_typescript_modules/scripts_documentation/API/scripts.om.d.ts
+  // var om was stripped out
+
+  // workspace_typescript_modules/src/shouter/shouter.ts
+  var ShoutingLevel = /* @__PURE__ */ ((ShoutingLevel3) => {
+    ShoutingLevel3["TRACE"] = "TRACE";
+    ShoutingLevel3["DEBUG"] = "DEBUG";
+    ShoutingLevel3["INFO"] = "INFO";
+    ShoutingLevel3["WARNING"] = "WARNING";
+    ShoutingLevel3["ERROR"] = "ERROR";
+    ShoutingLevel3["NONE"] = "NONE";
+    return ShoutingLevel3;
+  })(ShoutingLevel || {});
+  var DEFAULT_SHOUTER_LVL = "INFO" /* INFO */;
+  var Shouter = class _Shouter {
+    channels;
+    shouterLvl;
+    logger;
+    constructor(logger = null) {
+      this.logger = logger;
+      this.setLevels(DEFAULT_SHOUTER_LVL);
+    }
+    setLevels(shouterLvl, loggerLvl = null) {
+      this.shouterLvl = shouterLvl;
+      this.channels = {
+        TRACE: this._shout,
+        DEBUG: this._shout,
+        INFO: this._shout,
+        WARNING: this._shout,
+        ERROR: this._shout,
+        NONE: null
+      };
+      switch (shouterLvl) {
+        case "TRACE" /* TRACE */:
+          break;
+        case "DEBUG" /* DEBUG */:
+          this.channels.TRACE = null;
+          break;
+        case "INFO" /* INFO */:
+          this.channels.TRACE = null;
+          this.channels.DEBUG = null;
+          break;
+        case "WARNING" /* WARNING */:
+          this.channels.TRACE = null;
+          this.channels.DEBUG = null;
+          this.channels.INFO = null;
+          break;
+        case "ERROR" /* ERROR */:
+          this.channels.TRACE = null;
+          this.channels.DEBUG = null;
+          this.channels.INFO = null;
+          this.channels.WARNING = null;
+          break;
+        case "NONE" /* NONE */:
+          this.channels.TRACE = null;
+          this.channels.DEBUG = null;
+          this.channels.INFO = null;
+          this.channels.WARNING = null;
+          this.channels.ERROR = null;
+          break;
+        default:
+          throw new Error(`Shouting level is incorrect! Available levels are: ${JSON.stringify(Object.values(ShoutingLevel))}. Got: '${shouterLvl}'`);
+      }
+      if (this.logger !== null && loggerLvl !== null) {
+        this.logger.setLevel(loggerLvl);
+      } else if (this.logger !== null && loggerLvl === null) {
+        this.logger.setLevel(shouterLvl);
+      } else if (this.logger === null && loggerLvl !== null) {
+        throw new Error("Logger is not set!");
+      }
+    }
+    getShouterLevel() {
+      return this.shouterLvl;
+    }
+    getLogger() {
+      return this.logger;
+    }
+    static trim(msg) {
+      if (msg.length > 1e3) {
+        return `The message is too long. It starts and ends with ---->
+${msg.substring(0, 500)}
+<______][______>
+${msg.substring(msg.length - 500, msg.length)}`;
+      } else {
+        return msg;
+      }
+    }
+    _shout(msg) {
+      console.log(msg);
+      console.log("\n");
+      return this;
+    }
+    _useChannel(channel, msg) {
+      if (typeof this.channels === "undefined") {
+        throw new Error("Shouting levels must be set first!");
+      }
+      let outMsg = null;
+      if (typeof msg === "function") {
+        outMsg = _Shouter.trim(msg());
+      } else {
+        outMsg = _Shouter.trim(msg);
+      }
+      if (this.logger !== null) {
+        this.logger.append(channel, outMsg);
+      }
+      const messageChanel = this.channels[channel];
+      if (messageChanel !== null) {
+        messageChanel(outMsg);
+        return true;
+      }
+      return false;
+    }
+    trace(msg) {
+      return this._useChannel("TRACE" /* TRACE */, msg);
+    }
+    debug(msg) {
+      return this._useChannel("DEBUG" /* DEBUG */, msg);
+    }
+    warning(msg) {
+      return this._useChannel("WARNING" /* WARNING */, msg);
+    }
+    error(msg) {
+      return this._useChannel("ERROR" /* ERROR */, msg);
+    }
+    info(msg) {
+      om.common.requestInfo().setStatusMessage(_Shouter.trim(msg));
+      return this._useChannel("INFO" /* INFO */, msg);
+    }
+  };
+  var ShouterLogger = class {
+    channels;
+    data;
+    loggerLvl;
+    constructor() {
+      this.data = [];
+    }
+    setLevel(loggerLvl) {
+      this.loggerLvl = loggerLvl;
+      this.channels = {
+        TRACE: true,
+        DEBUG: true,
+        INFO: true,
+        WARNING: true,
+        ERROR: true,
+        NONE: false
+      };
+      switch (loggerLvl) {
+        case "TRACE" /* TRACE */:
+          break;
+        case "DEBUG" /* DEBUG */:
+          this.channels.TRACE = false;
+          break;
+        case "INFO" /* INFO */:
+          this.channels.TRACE = false;
+          this.channels.DEBUG = false;
+          break;
+        case "WARNING" /* WARNING */:
+          this.channels.TRACE = false;
+          this.channels.DEBUG = false;
+          this.channels.INFO = false;
+          break;
+        case "ERROR" /* ERROR */:
+          this.channels.TRACE = false;
+          this.channels.DEBUG = false;
+          this.channels.INFO = false;
+          this.channels.WARNING = false;
+          break;
+        case "NONE" /* NONE */:
+          this.channels.TRACE = false;
+          this.channels.DEBUG = false;
+          this.channels.INFO = false;
+          this.channels.WARNING = false;
+          this.channels.ERROR = false;
+          break;
+        default:
+          throw new Error(`Shouting level is incorrect! Available levels are: ${JSON.stringify(Object.values(ShoutingLevel))}. Got: '${loggerLvl}'`);
+      }
+    }
+    getLoggerLvl() {
+      return this.loggerLvl;
+    }
+    getData() {
+      return this.data;
+    }
+    append(channel, msg) {
+      if (typeof this.channels === "undefined") {
+        throw new Error("Logging level must be set first!");
+      }
+      if (this.channels[channel]) {
+        om.common.requestInfo().log(msg);
+        this.data.push({
+          time: (/* @__PURE__ */ new Date()).valueOf(),
+          channel: channel.toLowerCase(),
+          msg
+        });
+      }
+      return true;
+    }
+  };
+  var shouter = new Shouter(
+    new ShouterLogger()
+  );
+
+  // workspace_typescript_modules/src/lockManager/lockManager.ts
+  var ModelLockMode = /* @__PURE__ */ ((ModelLockMode2) => {
+    ModelLockMode2[ModelLockMode2["UNIQUE"] = 2] = "UNIQUE";
+    ModelLockMode2[ModelLockMode2["SHARED"] = 1] = "SHARED";
+    ModelLockMode2[ModelLockMode2["UNLOCKED"] = 0] = "UNLOCKED";
+    return ModelLockMode2;
+  })(ModelLockMode || {});
+  var LockManager = class {
+    enable = false;
+    requests = [];
+    nextRequestId = 0;
+    defaultLock;
+    constructor() {
+      this.defaultLock = this.getCurrentLock();
+    }
+    /**
+     * Asks the model, which lock mode is enabled
+     * @returns actual model lock mode
+     */
+    getCurrentLock() {
+      const modelInfo = om.common.modelInfo();
+      if (modelInfo.hasUniqueLock()) {
+        return 2 /* UNIQUE */;
+      } else if (modelInfo.hasSharedLock()) {
+        return 1 /* SHARED */;
+      } else {
+        return 0 /* UNLOCKED */;
+      }
+    }
+    /**
+     * Sets default lock mode which is used when no set lock requests are present.
+     * If there is a lock request, lock mode will be set according to the request
+     * even if it is lower than the default mode
+     * @param mode lock mode to set as default
+     */
+    setDefaultLockMode(mode) {
+      shouter.trace(`Setting default lock to ${ModelLockMode[mode]}`);
+      this.defaultLock = mode;
+      this.ensureLockIsRight();
+    }
+    /**
+     * Default mode is initially set at script start up by the
+     * system. It can be changed via the `setDefaultLockMode` method
+     * @returns current default lock mode
+     */
+    getDefaultLockMode() {
+      return this.defaultLock;
+    }
+    /**
+     * By default lock manager does not do anything.
+     * To enable it one must use this method. Lock manager can be turned off and on
+     * any amount of times. When it is disabled it still keeps track of all requests
+     * but does nothing. If while disabled the requested lock mode will be higher
+     * than the current lock mode, exception will be thrown
+     * @param enable boolean status flag
+     */
+    setEnableStatus(enable) {
+      this.enable = enable;
+      this.ensureLockIsRight();
+    }
+    // considering one really needs to change the mode
+    // i.e. the checks were already done
+    setLockTo(mode) {
+      shouter.trace(`Setting lock mode to ${mode}`);
+      switch (mode) {
+        case 2 /* UNIQUE */:
+          om.common.modelInfo().useUniqueLock();
+          break;
+        case 1 /* SHARED */:
+          om.common.modelInfo().useSharedLock();
+          break;
+        case 0 /* UNLOCKED */:
+          om.common.modelInfo().unlock();
+          break;
+        default:
+          throw new Error(`Lock mode '${mode}' is not supported, available modes are: ${JSON.stringify(ModelLockMode)}`);
+      }
+      shouter.trace(`Lock mode ${ModelLockMode[mode]} was set`);
+    }
+    ensureLockIsRight() {
+      let theHighestRequiredLock;
+      const requieredLockList = this.getListOfRequiredLocks();
+      if (requieredLockList.length === 0) {
+        theHighestRequiredLock = this.defaultLock;
+      } else {
+        theHighestRequiredLock = this.getTheHighestLockOf(requieredLockList);
+      }
+      const currentLock = this.getCurrentLock();
+      if (currentLock !== theHighestRequiredLock) {
+        if (!this.enable) {
+          if (theHighestRequiredLock <= currentLock) {
+            shouter.trace("Lock mode switching is disabled, but lock is high enough");
+          } else {
+            throw new Error(`Can not upgrade from ${ModelLockMode[currentLock]} to ${ModelLockMode[theHighestRequiredLock]} as lock mode switching is disabled`);
+          }
+        } else {
+          this.setLockTo(theHighestRequiredLock);
+        }
+      }
+    }
+    getTheHighestLockOf(modes) {
+      if (modes.length === 0) {
+        throw new Error("Lock mode array is empty");
+      }
+      let highestLock = modes[0];
+      modes.forEach((mode) => {
+        if (mode > highestLock) {
+          highestLock = mode;
+        }
+      });
+      return highestLock;
+    }
+    getListOfRequiredLocks() {
+      return Object.values(this.requests);
+    }
+    addRequest(id, mode) {
+      this.requests[id] = mode;
+    }
+    removeRequest(id) {
+      if (!this.requests.hasOwnProperty(id)) {
+        shouter.warning(`There is no request with id ${id} in the lock mode change request storage`);
+        return;
+      }
+      shouter.trace(`Removing request with id ${id} and mode ${ModelLockMode[this.requests[id]]} from the lock mode change request storage`);
+      delete this.requests[id];
+    }
+    /**
+     * Method ensures that the lock will be at least as requested.
+     * As there may be multiple simultaneous lock requests, actual lock may be even higher.
+     * @param mode enum's ModelLockMode element — required lock
+     * @returns request id to use in `iDontNeedLockAnyMore` method to eliviate the set lock
+     */
+    iWantLockToBe(mode) {
+      const id = this.nextRequestId++;
+      this.addRequest(id, mode);
+      this.ensureLockIsRight();
+      return id;
+    }
+    /**
+     * Removes lock request set earlier.
+     * As there may be multiple simultaneous lock requests, actual lock may change or may not.
+     * @param id request id, returned by the `iWantLockToBe` method
+     */
+    iDontNeedLockAnyMore(id) {
+      this.removeRequest(id);
+      this.ensureLockIsRight();
+    }
+  };
+  var lockManager = new LockManager();
+
+  // workspace_typescript_modules/src/commonUtils/fileUploadUtils.ts
+  var fileHashes = [];
+  function getDateAsSafeString() {
+    return (/* @__PURE__ */ new Date()).toLocaleString("ru-RU").replace(/:/g, "_").replace(/\./g, "_").replace(/,/g, "_").replace(/ /g, "_");
+  }
+  function setFileDownloadable(fileHash) {
+    fileHashes.push(fileHash);
+    om.common.resultInfo().addFileHash(fileHash);
+  }
+
+  // workspace_typescript_modules/src/commonUtils/scriptAppearanceUtils.ts
+  function hideModalWithConsoleOutput() {
+    om.common.resultInfo().setProperty("lockModal", true);
+  }
+
+  // workspace_typescript_modules/src/contextManager/context.ts
+  var ContextType = /* @__PURE__ */ ((ContextType2) => {
+    ContextType2["MODEL_FILTERS"] = "Model filters";
+    ContextType2["DASHBOARD_FILTERS"] = "Dashboard filters";
+    ContextType2["CARD_FILTERS"] = "Card filters";
+    ContextType2["CARD_HEADER_SELECTION"] = "Card header selection";
+    ContextType2["CARD_DEPENDENT"] = "Card dependent";
+    ContextType2["CELL_INFO"] = "Cell information";
+    return ContextType2;
+  })(ContextType || {});
+  var contextVariableMap = {
+    "Model filters": "modelFilters",
+    "Dashboard filters": "dashboardFilters",
+    "Card filters": "cardFilters",
+    "Card header selection": "selectedInfo",
+    "Card dependent": "cardContext",
+    "Cell information": "cellInfo"
+  };
+  var Context = class {
+    isContextAvailable = false;
+    context = [];
+    availableDimensions = [];
+    constructor(type) {
+      const availableTypes = this.getAvailableTypes();
+      if (!availableTypes.includes(type)) {
+        throw new Error(`Unsupported context type. Available values are ${JSON.stringify(availableTypes)}`);
+      }
+      this.loadContext(type);
+    }
+    isAvailable() {
+      return this.isContextAvailable;
+    }
+    getAvailableDimensions() {
+      return this.loadEntityInfoCollection(this.availableDimensions).map((entityInfo) => `${entityInfo.name()} (${entityInfo.longId()})`);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getContextByDimension(dimensionIds) {
+      throw new Error("Method not implemented");
+    }
+    loadContext(type) {
+      const context = om.environment.get(contextVariableMap[type]);
+      if (context) {
+        this.context = context;
+        this.isContextAvailable = true;
+        this.validateContext();
+        this.loadAvailableDimensions();
+      }
+    }
+    getAvailableTypes() {
+      throw new Error("Method not implemented");
+    }
+    validateContext() {
+      if (!Array.isArray(this.context)) {
+        throw new Error(`Context data is incorrect. Got ${JSON.stringify(this.context)}`);
+      }
+    }
+    validateLongIdList(list) {
+      return !list.some((item) => typeof item !== "number" || !Number.isInteger(item) || item <= 0);
+    }
+    loadAvailableDimensions() {
+      throw new Error("Method not implemented");
+    }
+    loadEntityInfoCollection(longIds) {
+      return longIds.map(this.loadEntityInfo);
+    }
+    loadEntityInfo(longId) {
+      const reqId = lockManager.iWantLockToBe(1 /* SHARED */);
+      const entityInfo = om.common.entitiesInfo().get(longId);
+      lockManager.iDontNeedLockAnyMore(reqId);
+      if (!entityInfo) {
+        throw new Error(`Can not get an entity information by LongId ${longId}`);
+      }
+      return entityInfo;
+    }
+    matchDimension(userDimIds, dimLongId) {
+      let dimName = null;
+      return userDimIds.some((id) => {
+        if (typeof id === "string") {
+          if (!dimName) {
+            dimName = this.loadEntityInfo(dimLongId).name();
+          }
+          return dimName === id;
+        }
+        return dimLongId === id;
+      });
+    }
+  };
+  var FilterContext = class extends Context {
+    getAvailableTypes() {
+      return [
+        "Model filters" /* MODEL_FILTERS */,
+        "Dashboard filters" /* DASHBOARD_FILTERS */,
+        "Card filters" /* CARD_FILTERS */
+      ];
+    }
+    validateContext() {
+      super.validateContext();
+      this.context.forEach((item, idx) => {
+        let errorMsg = "";
+        if (typeof item !== "object" || Array.isArray(item)) {
+          errorMsg = "is not an object";
+        } else {
+          const filter = item;
+          if (!filter.filterDimensionLongId && !filter.key) {
+            errorMsg = "dimension LongId is missing";
+          } else if (!filter.entityLongId) {
+            errorMsg = "entity LongId is missing";
+          }
+        }
+        if (errorMsg) {
+          throw new Error(`Context data is incorrect. Filter[${idx}] ${errorMsg}. Got ${JSON.stringify(this.context)}`);
+        }
+      });
+    }
+    loadAvailableDimensions() {
+      this.availableDimensions = this.context.map((item) => {
+        return item.key || item.filterDimensionLongId;
+      });
+    }
+    getContextByDimension(dimensionIds) {
+      const resultFilters = this.context.filter((item) => {
+        return this.matchDimension(dimensionIds, item.key || item.filterDimensionLongId);
+      });
+      return resultFilters.map((item) => {
+        return this.loadEntityInfo(item.entityLongId);
+      });
+    }
+  };
+  var CardContext = class extends Context {
+    getAvailableTypes() {
+      return [
+        "Card dependent" /* CARD_DEPENDENT */,
+        "Card header selection" /* CARD_HEADER_SELECTION */
+      ];
+    }
+    validateContext() {
+      super.validateContext();
+      if (!this.validateLongIdList(this.context)) {
+        throw new Error(`Context data contains incorrect values. Got ${JSON.stringify(this.context)}`);
+      }
+    }
+    loadAvailableDimensions() {
+      const dimLongIds = this.loadEntityInfoCollection(this.context).map((entityInfo) => entityInfo.hierarchyLongId()).filter((longId) => longId !== -1);
+      const uniqueCollection = new Set(dimLongIds);
+      this.availableDimensions = Array.from(uniqueCollection.values());
+    }
+    getContextByDimension(dimensionIds) {
+      return this.loadEntityInfoCollection(this.context).filter((entityInfo) => {
+        const dimLongId = entityInfo.hierarchyLongId();
+        return dimLongId !== -1 && this.matchDimension(dimensionIds, dimLongId);
+      });
+    }
+  };
+  var CellContext = class extends Context {
+    getAvailableTypes() {
+      return ["Cell information" /* CELL_INFO */];
+    }
+    validateContext() {
+      super.validateContext();
+      this.context.forEach((item, idx) => {
+        let errorMsg = "";
+        if (typeof item !== "object" || Array.isArray(item)) {
+          errorMsg = "is not an object";
+        } else {
+          const cell = item;
+          if (!cell.entityLongIds || !Array.isArray(cell.entityLongIds) || !cell.entityLongIds.length) {
+            errorMsg = "entity LongId list is missing";
+          } else {
+            if (!this.validateLongIdList(cell.entityLongIds)) {
+              errorMsg = "entity LongId list contains incorrect values";
+            }
+          }
+        }
+        if (errorMsg) {
+          throw new Error(`Context data is incorrect. Cell [${idx}] ${errorMsg}. Got ${JSON.stringify(this.context)}`);
+        }
+      });
+    }
+    loadAvailableDimensions() {
+      const cells = this.getGridCells();
+      const uniqueDimensions = /* @__PURE__ */ new Set();
+      cells.forEach((cellInfo) => {
+        const cellDimensions = this.loadEntityInfoCollection(cellInfo.entityLongIds).map((entityInfo) => entityInfo.hierarchyLongId()).filter((longId) => longId !== -1);
+        cellDimensions.forEach((longId) => uniqueDimensions.add(longId));
+      });
+      this.availableDimensions = Array.from(uniqueDimensions.values());
+    }
+    getGridCells() {
+      return this.context.filter((cellInfo) => cellInfo.hasOwnProperty("value"));
+    }
+    getContextByDimension(dimensionIds) {
+      const cells = this.getGridCells();
+      const uniqueElements = /* @__PURE__ */ new Set();
+      cells.forEach((cellInfo) => {
+        const cellDimensions = this.loadEntityInfoCollection(cellInfo.entityLongIds).map((entityInfo) => entityInfo.hierarchyLongId());
+        cellDimensions.forEach((longId, idx) => {
+          if (longId !== -1 && this.matchDimension(dimensionIds, longId)) {
+            uniqueElements.add(cellInfo.entityLongIds[idx]);
+          }
+        });
+      });
+      return this.loadEntityInfoCollection(Array.from(uniqueElements.values()));
+    }
+    getCellValues() {
+      const cells = this.getGridCells();
+      const result = [];
+      let hasNullValues = false;
+      cells.forEach((cellInfo) => {
+        if (cellInfo.value === null || cellInfo.value === "") {
+          hasNullValues = true;
+        } else {
+          result.push(cellInfo.value);
+        }
+      });
+      if (hasNullValues) {
+        shouter.warning("Some selected cells have NULL or empty value. Ignoring them");
+      }
+      return result;
+    }
+  };
+  var contextHandlers = {
+    "Model filters": FilterContext,
+    "Dashboard filters": FilterContext,
+    "Card filters": FilterContext,
+    "Card header selection": CardContext,
+    "Card dependent": CardContext,
+    "Cell information": CellContext
+  };
+  function getContextHandler(type) {
+    const availableTypes = Object.values(ContextType);
+    if (!availableTypes.includes(type)) {
+      throw new Error(`Unsupported context type. Available values are ${JSON.stringify(availableTypes)}`);
+    }
+    return new contextHandlers[type](type);
+  }
+
+  // workspace_typescript_modules/src/manifestVerifier/stringReplacer.ts
+  var BORDER_SIGN = "\\|\\|";
+  var OPERATOR_SIGN = ">>>";
+  var ID_START_SIGN = "{";
+  var ID_END_SIGN = "}";
+  var ID_PATTERN = `${ID_START_SIGN}.[^${ID_END_SIGN}]+${ID_END_SIGN}`;
+  var NEXT_OPERATOR_PATTERN = `${OPERATOR_SIGN}((?!${OPERATOR_SIGN}).)+`;
+  var LONG_ID_MIN = 1e9;
+  var EntityOperators = /* @__PURE__ */ ((EntityOperators2) => {
+    EntityOperators2["NAME"] = "NAME";
+    EntityOperators2["CODE"] = "CODE";
+    EntityOperators2["LABEL"] = "LABEL";
+    EntityOperators2["LONG_ID"] = "LONG_ID";
+    return EntityOperators2;
+  })(EntityOperators || {});
+  var TypeOperators = /* @__PURE__ */ ((TypeOperators2) => {
+    TypeOperators2["AS_LONG_ID"] = "AS_LONG_ID";
+    TypeOperators2["TO_STRING"] = "TO_STRING";
+    TypeOperators2["TO_INT"] = "TO_INT";
+    TypeOperators2["TO_FLOAT"] = "TO_FLOAT";
+    TypeOperators2["TO_BOOLEAN"] = "TO_BOOLEAN";
+    return TypeOperators2;
+  })(TypeOperators || {});
+  var StringOperators = /* @__PURE__ */ ((StringOperators2) => {
+    StringOperators2["SINGLE_QUOTES"] = "SINGLE_QUOTES";
+    StringOperators2["DOUBLE_QUOTES"] = "DOUBLE_QUOTES";
+    return StringOperators2;
+  })(StringOperators || {});
+  var OPERATOR_AS_LIST = "AS_LIST";
+  var DEFAULT_ENTITY_OPERATOR = "NAME" /* NAME */;
+  function validateLongId(value) {
+    if (Number.isNaN(value) || !Number.isInteger(value) || value < LONG_ID_MIN) {
+      throw new Error("LongId must be a positive integer number of 10 digits or more");
+    }
+  }
+  function getEntityByLongId(value) {
+    if (typeof value !== "number") {
+      throw new Error(`Unable to treat value of type ${typeof value} as LongId`);
+    }
+    validateLongId(value);
+    const entityInfo = om.common.entitiesInfo().get(value);
+    if (!entityInfo) {
+      throw new Error(`LongId '${value}' not found`);
+    }
+    return entityInfo;
+  }
+  function convertToString(value) {
+    switch (typeof value) {
+      case "string":
+        return value;
+      case "number":
+      case "boolean":
+        return value.toString();
+      case "object":
+        return Array.isArray(value) ? `[${value.join(",")}]` : JSON.stringify(value);
+      default:
+        throw new Error(`Unable to convert value of type ${typeof value} to string`);
+    }
+  }
+  function convertToFloat(value) {
+    switch (typeof value) {
+      case "number":
+        return value;
+      case "string":
+        return parseFloat(value);
+      default:
+        throw new Error(`Unable to convert value of type ${typeof value} to float`);
+    }
+  }
+  function convertToInt(value) {
+    switch (typeof value) {
+      case "number":
+        return value;
+      case "string":
+        return parseInt(value);
+      default:
+        throw new Error(`Unable to convert value of type ${typeof value} to integer`);
+    }
+  }
+  function convertToBoolean(value) {
+    switch (typeof value) {
+      case "boolean":
+        return value;
+      case "string":
+        return value === "true" /* true */ ? true : value === "false" /* false */ ? false : Boolean(value);
+      case "number":
+      case "object":
+        return Boolean(value);
+      default:
+        throw new Error(`Unable to convert value of type ${typeof value} to boolean`);
+    }
+  }
+  function transformEntity(value, operator) {
+    const entityMethods = ["name", "code", "label", "longId"];
+    let isEntity = false;
+    if (value && typeof value === "object") {
+      isEntity = !entityMethods.some((prop) => !value.hasOwnProperty(prop));
+    }
+    if (!isEntity) {
+      throw new Error(`Incorrect transform operator ${operator} for value of type ${typeof value}`);
+    }
+    const entity = value;
+    switch (operator) {
+      case "NAME" /* NAME */:
+        return entity.name();
+      case "CODE" /* CODE */:
+        return entity.code();
+      case "LABEL" /* LABEL */:
+        return entity.label();
+      case "LONG_ID" /* LONG_ID */:
+        return entity.longId();
+      default:
+        throw new Error(`Incorrect transform operator ${operator} for Entity`);
+    }
+  }
+  function transformString(value, operator) {
+    if (typeof value !== "string") {
+      throw new Error(`Incorrect transform operator ${operator} for value of type ${typeof value}`);
+    }
+    switch (operator) {
+      case "SINGLE_QUOTES" /* SINGLE_QUOTES */:
+        return `'${value}'`;
+      case "DOUBLE_QUOTES" /* DOUBLE_QUOTES */:
+        return `"${value}"`;
+      default:
+        throw new Error(`Incorrect transform operator ${operator} for string value`);
+    }
+  }
+  var Parser = class {
+    operators;
+    data;
+    constructor(data) {
+      this.data = data;
+      this.operators = this.buildOperators();
+    }
+    buildOperators() {
+      const operators = {};
+      Object.values(EntityOperators).forEach((operator) => {
+        operators[operator] = (value) => transformEntity(value, operator);
+      });
+      Object.values(StringOperators).forEach((operator) => {
+        operators[operator] = (value) => transformString(value, operator);
+      });
+      operators["AS_LONG_ID" /* AS_LONG_ID */] = getEntityByLongId;
+      operators["TO_STRING" /* TO_STRING */] = convertToString;
+      operators["TO_INT" /* TO_INT */] = convertToInt;
+      operators["TO_FLOAT" /* TO_FLOAT */] = convertToFloat;
+      operators["TO_BOOLEAN" /* TO_BOOLEAN */] = convertToBoolean;
+      return operators;
+    }
+    shiftData(index) {
+      this.data = this.data.slice(index).trim();
+    }
+    parseNext(pattern) {
+      const regex = new RegExp("^" + pattern, "g");
+      const matches = regex.exec(this.data);
+      if (!matches) {
+        return null;
+      }
+      this.shiftData(regex.lastIndex);
+      return matches[0];
+    }
+    parseOperator() {
+      const match = this.parseNext(NEXT_OPERATOR_PATTERN);
+      if (!match) {
+        return null;
+      }
+      return match.slice(OPERATOR_SIGN.length).trim();
+    }
+    parseEntityId() {
+      const match = this.parseNext(ID_PATTERN);
+      if (!match) {
+        return null;
+      }
+      return match.slice(ID_START_SIGN.length, -ID_END_SIGN.length).trim();
+    }
+    transformValues(values, isEntity) {
+      const operator = this.parseOperator();
+      const getEntityDefaultValue = (entity) => {
+        return this.operators[DEFAULT_ENTITY_OPERATOR](entity);
+      };
+      if (!operator) {
+        return isEntity ? getEntityDefaultValue(values[0]) : values[0];
+      }
+      if (operator === OPERATOR_AS_LIST) {
+        return isEntity ? values.map(getEntityDefaultValue) : values;
+      }
+      if (!this.operators.hasOwnProperty(operator)) {
+        throw new Error(`Unsupported transform operator ${operator}
+            Available operators are:
+            - for LongId and context: ${Object.values(EntityOperators).join(", ")}
+            - for string value: ${Object.values(StringOperators).join(", ")}
+            - type conversion: ${Object.values(TypeOperators).join(", ")}
+            - list of values: ${OPERATOR_AS_LIST} (is always treated as the last operator)`);
+      }
+      let resultValues = values;
+      if (isEntity && !(operator in EntityOperators)) {
+        resultValues = values.map(getEntityDefaultValue);
+      }
+      resultValues = resultValues.map((item) => {
+        return this.operators[operator](item);
+      });
+      return this.transformValues(resultValues, operator === "AS_LONG_ID" /* AS_LONG_ID */);
+    }
+    handleEntityIdList() {
+      const id = this.parseEntityId();
+      if (!id) {
+        return null;
+      }
+      const idCollection = id.split(",").map((item) => item.trim());
+      const result = /* @__PURE__ */ new Set();
+      idCollection.forEach((id2) => {
+        if (!id2) {
+          return;
+        }
+        const longId = +id2;
+        if (Number.isNaN(longId)) {
+          result.add(id2);
+        } else {
+          validateLongId(longId);
+          result.add(longId);
+        }
+      });
+      return result.size ? Array.from(result.values()) : null;
+    }
+    handleEntityName() {
+      const entityIds = this.handleEntityIdList();
+      if (!entityIds) {
+        return null;
+      }
+      if (entityIds.length > 1) {
+        throw new Error(`Only one entity identificator must be defined. Got list: ${entityIds.join(", ")}`);
+      }
+      const id = entityIds[0];
+      return typeof id === "number" ? getEntityByLongId(id).name() : id;
+    }
+    handleLongId() {
+      const strLongId = this.parseEntityId();
+      if (!strLongId) {
+        throw new Error("LongId not defined");
+      }
+      const entityInfo = getEntityByLongId(+strLongId);
+      return this.transformValues([entityInfo], true);
+    }
+    handleVariable() {
+      const variableName = this.handleEntityName();
+      if (!variableName) {
+        throw new Error("Variable not defined");
+      }
+      const variable = om.variables.get(variableName);
+      const value = variable.getValue();
+      return this.transformValues([value], variable.isEntity());
+    }
+    handleCubeValue() {
+      const multicubeName = this.handleEntityName();
+      if (!multicubeName) {
+        throw new Error("Multicube not defined");
+      }
+      const cubeName = this.handleEntityName();
+      if (!cubeName) {
+        throw new Error("Cube not defined");
+      }
+      const value = om.environment.load(multicubeName).get(cubeName);
+      return this.transformValues([value], false);
+    }
+    handleContextByDimension(type) {
+      const dimensionIds = this.handleEntityIdList();
+      if (!dimensionIds) {
+        throw new Error(`${type} dimension not defined`);
+      }
+      const context = getContextHandler(type);
+      if (!context.isAvailable()) {
+        throw new Error(`${type} context not available`);
+      }
+      const result = context.getContextByDimension(dimensionIds);
+      if (!result.length) {
+        const contextDimensions = context.getAvailableDimensions();
+        const idSubstring = dimensionIds.length > 1 ? `s ${JSON.stringify(dimensionIds)}` : ` '${dimensionIds[0]}'`;
+        throw new Error(`Can not match identificator${idSubstring} to any dimension. Context dimensions are: ${JSON.stringify(contextDimensions)}`);
+      }
+      return this.transformValues(result, true);
+    }
+    handleCellValueContext() {
+      const type = "Cell information" /* CELL_INFO */;
+      const context = new CellContext(type);
+      if (!context.isAvailable()) {
+        throw new Error(`${type} context not available`);
+      }
+      const result = context.getCellValues();
+      if (!result.length) {
+        throw new Error("Cells with a value not found");
+      }
+      return this.transformValues(result, false);
+    }
+  };
+  var StringReplacer = class {
+    replacers = {
+      "LONG_ID": (data) => {
+        return new Parser(data).handleLongId();
+      },
+      "VARIABLE": (data) => {
+        return new Parser(data).handleVariable();
+      },
+      "CUBE_VALUE": (data) => {
+        return new Parser(data).handleCubeValue();
+      },
+      "DASHBOARD_FILTER_CONTEXT": (data) => {
+        return new Parser(data).handleContextByDimension("Dashboard filters" /* DASHBOARD_FILTERS */);
+      },
+      "MODEL_FILTER_CONTEXT": (data) => {
+        return new Parser(data).handleContextByDimension("Model filters" /* MODEL_FILTERS */);
+      },
+      "CARD_FILTER_CONTEXT": (data) => {
+        return new Parser(data).handleContextByDimension("Card filters" /* CARD_FILTERS */);
+      },
+      "CARD_HEADER_SELECTION_CONTEXT": (data) => {
+        return new Parser(data).handleContextByDimension("Card header selection" /* CARD_HEADER_SELECTION */);
+      },
+      "CARD_DEPENDENT_CONTEXT": (data) => {
+        return new Parser(data).handleContextByDimension("Card dependent" /* CARD_DEPENDENT */);
+      },
+      "CELL_CONTEXT_CELL_ELEMENTS": (data) => {
+        return new Parser(data).handleContextByDimension("Cell information" /* CELL_INFO */);
+      },
+      "CELL_CONTEXT_CELL_VALUES": (data) => {
+        return new Parser(data).handleCellValueContext();
+      }
+    };
+    trimBorders(data, start, end) {
+      const regex = new RegExp(`^${start}|${end}$`, "g");
+      return data.replace(regex, "").trim();
+    }
+    /**
+     * Replaces a source string with a value if the string matches the following patterns:
+     * 1) ||LONG_ID {longId} >>>OPERATOR||
+     * 2) ||CUBE_VALUE {multicube name or longId} {cube name or longId} >>>OPERATOR||
+     * 3) ||VARIABLE {variable name or longId} >>>OPERATOR||
+     * 4) ||DASHBOARD_FILTER_CONTEXT {dimension} >>>OPERATOR||
+     * 5) ||MODEL_FILTER_CONTEXT {dimension} >>>OPERATOR||
+     * 6) ||CARD_FILTER_CONTEXT {dimension} >>>OPERATOR||
+     * 7) ||CARD_HEADER_SELECTION_CONTEXT {list of dimensions in one hierarchy} >>>OPERATOR||
+     * 8) ||CARD_DEPENDENT_CONTEXT {list of dimensions in one hierarchy} >>>OPERATOR||
+     * 9) ||CELL_CONTEXT_CELL_ELEMENTS {list of dimensions in one hierarchy} >>>OPERATOR||
+     * 10) ||CELL_CONTEXT_CELL_VALUES >>>OPERATOR||
+     * 
+     * OPERATOR is optional or may be specified multiple times.
+     * Available operators:
+     * - for LongId and context: NAME (by default), CODE, LABEL, LONG_ID
+     * - for string value: SINGLE_QUOTES, DOUBLE_QUOTES
+     * - type conversion: TO_STRING, TO_INT, TO_FLOAT, TO_BOOLEAN, AS_LONG_ID
+     * - list of values: AS_LIST (is always treated as the last operator)
+     * 
+     * If the source string contains substrings that match the patterns, the method replaces
+     * these substrings with values and returns a new string.
+     * 
+     * @param sourceString a source string
+     * @returns a replaced value or the source string if it does't match any patterns
+     */
+    replace(sourceString) {
+      const patternEnd = BORDER_SIGN;
+      let resultValue = sourceString;
+      for (const [key, handlerFunc] of Object.entries(this.replacers)) {
+        const patternStart = `${BORDER_SIGN} *${key}`;
+        const regex = RegExp(`${patternStart}((?!${BORDER_SIGN}).)+${patternEnd}`, "g");
+        const matches = resultValue.match(regex);
+        if (!matches) {
+          continue;
+        }
+        if (matches.length === 1 && matches[0] === sourceString) {
+          const body = this.trimBorders(matches[0], patternStart, patternEnd);
+          return handlerFunc(body);
+        }
+        const uniqueMatches = new Set(matches);
+        uniqueMatches.forEach((match) => {
+          const body = this.trimBorders(match, patternStart, patternEnd);
+          const newValue = handlerFunc(body);
+          if (newValue !== body) {
+            const collection = resultValue.split(match);
+            resultValue = collection.join(convertToString(newValue));
+          }
+        });
+      }
+      return resultValue;
+    }
+  };
+
+  // workspace_typescript_modules/src/manifestVerifier/manifestVerifier.ts
+  var EnvSequence = class {
+    seq;
+    constructor(head, key, env) {
+      this.seq = [...head || [], { key, env }];
+    }
+    last() {
+      return this.seq[this.seq.length - 1].env;
+    }
+    get(property) {
+      const items = this.seq.filter((item) => item.key === property);
+      if (!items.length) {
+        throw new Error(`Setting ${property} not found in env sequence`);
+      }
+      return items[items.length - 1].env;
+    }
+    buildPath(finalKey) {
+      const keySeq = this.seq.map((item) => item.key);
+      keySeq.push(finalKey);
+      return keySeq.join(" -> ");
+    }
+    getSeq() {
+      return this.seq;
+    }
+  };
+  var ManifestCsvWriter = class {
+    csvWriter;
+    listName;
+    constructor(listName) {
+      this.csvWriter = om.filesystems.filesDataManager().csvWriter();
+      this.listName = listName;
+    }
+    writeHeader() {
+      this.csvWriter.writeRow(["", "Item Name", "List", "Parent", "Code", "Display Name", "Type", "Optional", "Description", "Available values", "Default value"]);
+      return this;
+    }
+    writeParams(params, parent) {
+      if (!params) {
+        return this;
+      }
+      Object.entries(params).forEach(([key, info]) => {
+        this.writeParamInfo(key, info, parent);
+      });
+      return this;
+    }
+    saveFile(filename) {
+      shouter.trace("Saving the manifest to CSV file");
+      return this.csvWriter.save(filename);
+    }
+    writeParamInfo(name, info, parent) {
+      const itemName = parent ? `${parent}-${name}` : name;
+      const isOptional = ValueUtils.isOptional(info);
+      const availableTypes = ValueUtils.getAvailableTypes(info);
+      const availableValues = ValueUtils.getAvailableValues(info);
+      const description = info.description ? info.description : "";
+      const strTypes = availableTypes.join(" | ");
+      const strOptional = isOptional.toString();
+      const strDefaultValue = ValueUtils.convertToString(info.defaultValue);
+      let strAvailableValues = "";
+      if (availableValues) {
+        if (Array.isArray(availableValues)) {
+          const strValues = availableValues.map((value) => ValueUtils.convertToString(value));
+          strAvailableValues = strValues.join(" | ");
+        } else {
+          Object.entries(availableValues).forEach(([key, value]) => {
+            strAvailableValues += `${ValueUtils.convertToString(key)} - ${value}
+`;
+          });
+        }
+      }
+      this.csvWriter.writeRow(["", itemName, this.listName, parent, "", name, strTypes, strOptional, description, strAvailableValues, strDefaultValue]);
+      if (availableTypes.includes("array" /* array */) && info.arrayElement) {
+        this.writeParamInfo("array-item", info.arrayElement, itemName);
+        return;
+      }
+      if (availableTypes.includes("object" /* object */)) {
+        if (info.objectValues) {
+          this.writeParamInfo("key", info.objectValues.key, itemName);
+          this.writeParamInfo("value", info.objectValues.value, itemName);
+          return;
+        }
+        if (info.nestedObject) {
+          this.writeNestedParams(info, itemName);
+        }
+      }
+    }
+    writeNestedParams(info, parent) {
+      if (info.nestedObjectSwitch) {
+        const nestedObject = info.nestedObject;
+        const type = `value of ${info.nestedObjectSwitch()}`;
+        Object.entries(nestedObject).forEach(([value, params]) => {
+          const itemName = `${parent}-${value}`;
+          this.csvWriter.writeRow(["", itemName, this.listName, parent, "", `'${value}'`, type, "", params.description, "", ""]);
+          this.writeParams(params.nestedObject, itemName);
+        });
+      } else {
+        this.writeParams(info.nestedObject, parent);
+      }
+    }
+  };
+  var ParamModifier = class {
+    name;
+    info;
+    envSeq;
+    path;
+    constructor(name, info, envSeq) {
+      this.name = name;
+      this.envSeq = envSeq;
+      this.info = info;
+      this.path = this.envSeq.buildPath(this.name);
+    }
+    replaceString(paramValue) {
+      try {
+        return new StringReplacer().replace(paramValue);
+      } catch (e) {
+        throw new Error(`Failed to replace a value of setting ${this.path}. ${e.message}`);
+      }
+    }
+    modifyArrayValues(originalValue) {
+      let isValueModified = false;
+      const modifiedValue = originalValue.map((item) => {
+        if (typeof item === "string") {
+          const newValue = this.replaceString(item);
+          if (newValue !== item) {
+            isValueModified = true;
+            return newValue;
+          }
+        }
+        return item;
+      });
+      return isValueModified ? modifiedValue : originalValue;
+    }
+    modifyObjectValues(originalValue) {
+      if (!this.info.objectValues) {
+        return originalValue;
+      }
+      const modifiedValue = {};
+      let isValueModified = false;
+      Object.entries(originalValue).forEach(([key, val]) => {
+        const newKey = this.replaceString(key);
+        if (typeof newKey !== "string") {
+          throw new Error(`Failed to replace a value of setting ${this.path}. Object keys must be of type string. You are trying to replace a key with value of type ${typeof newKey}`);
+        }
+        const newVal = typeof val === "string" ? this.replaceString(val) : val;
+        modifiedValue[newKey] = newVal;
+        if (newKey != key || newVal !== val) {
+          isValueModified = true;
+        }
+      });
+      return isValueModified ? modifiedValue : originalValue;
+    }
+    modifyValue() {
+      const env = this.envSeq.last();
+      const originalValue = env[this.name];
+      let newValue = originalValue;
+      const valueTypes = ValueUtils.getAvailableTypes(this.info);
+      const isObjectExpected = valueTypes.includes("object" /* object */) && !valueTypes.includes("array" /* array */);
+      if (isObjectExpected && Array.isArray(originalValue) && originalValue.length === 0) {
+        env[this.name] = {};
+        return;
+      }
+      if (typeof originalValue === "string") {
+        newValue = this.replaceString(originalValue);
+      } else if (Array.isArray(originalValue) && originalValue.length) {
+        newValue = this.modifyArrayValues(originalValue);
+      } else if (typeof originalValue === "object" && originalValue != null) {
+        newValue = this.modifyObjectValues(originalValue);
+      }
+      if (newValue !== originalValue) {
+        env[this.name] = newValue;
+        const strValue = this.info.isSecret ? "*****" : ValueUtils.convertToString(newValue);
+        shouter.debug(`Value of setting ${this.path} has been replaced with value: ${strValue}`);
+      }
+    }
+  };
+  var ValueUtils;
+  ((ValueUtils2) => {
+    function getValueType(value) {
+      switch (typeof value) {
+        case "string":
+          return "string" /* string */;
+        case "number":
+          return "number" /* number */;
+        case "boolean":
+          return "boolean" /* boolean */;
+        case "object":
+          return !value ? "null" /* null */ : Array.isArray(value) ? "array" /* array */ : "object" /* object */;
+        default:
+          return null;
+      }
+    }
+    ValueUtils2.getValueType = getValueType;
+    function getAvailableTypes(info) {
+      return Array.isArray(info.type) ? info.type : [info.type];
+    }
+    ValueUtils2.getAvailableTypes = getAvailableTypes;
+    function isOptional(info, envSeq) {
+      return typeof info.isOptional === "function" ? info.isOptional(envSeq) : info.isOptional;
+    }
+    ValueUtils2.isOptional = isOptional;
+    function getAvailableValues(info, envSeq) {
+      const availableValues = typeof info.availableValues === "function" ? info.availableValues(envSeq) : info.availableValues;
+      if (!availableValues) {
+        return null;
+      }
+      return availableValues;
+    }
+    ValueUtils2.getAvailableValues = getAvailableValues;
+    function shieldSpecialChars(str) {
+      const specialChars = { "\n": "n", "\r": "r", "	": "t", "\b": "b", "\v": "v", "\f": "f" };
+      Object.entries(specialChars).forEach(([char, letter]) => {
+        const pattern = new RegExp(char, "g");
+        str = str.replace(pattern, "\\" + letter);
+      });
+      return str;
+    }
+    ValueUtils2.shieldSpecialChars = shieldSpecialChars;
+    function convertToString2(value) {
+      switch (typeof value) {
+        case "string": {
+          return `\`${shieldSpecialChars(value)}\``;
+        }
+        case "number":
+        case "bigint":
+        case "boolean":
+        case "symbol": {
+          return value.toString();
+        }
+        case "object": {
+          return JSON.stringify(value);
+        }
+        case "undefined": {
+          return "";
+        }
+        case "function":
+        default: {
+          throw new Error(`Value of type '${typeof value}' is not supported for parameters`);
+        }
+      }
+    }
+    ValueUtils2.convertToString = convertToString2;
+    function isEmpty(value) {
+      switch (typeof value) {
+        case "string":
+          return !value;
+        case "object":
+          return Array.isArray(value) ? !value.length : value !== null && !Object.keys(value).length;
+        default:
+          return false;
+      }
+    }
+    ValueUtils2.isEmpty = isEmpty;
+  })(ValueUtils || (ValueUtils = {}));
+  function checkObject(key, value, info, envSeq) {
+    if (info.objectValues) {
+      const objectInfo = info.objectValues;
+      Object.entries(value).forEach(([val1, val2]) => {
+        checkParamValue(key, val1, objectInfo.key, envSeq);
+        const seq = new EnvSequence(envSeq.getSeq(), key, value);
+        checkParamValue(val1, val2, objectInfo.value, seq);
+      });
+      return;
+    }
+    if (info.nestedObject) {
+      let params = null;
+      if (info.nestedObjectSwitch) {
+        const nestedObject = info.nestedObject;
+        const choice = nestedObject[info.nestedObjectSwitch(envSeq)];
+        params = choice.nestedObject;
+      } else {
+        params = info.nestedObject;
+      }
+      if (params) {
+        const seq = new EnvSequence(envSeq.getSeq(), key, value);
+        checkParams(params, seq, info.isAnyKeyPossible);
+      }
+    }
+  }
+  function checkParamValue(key, value, info, envSeq) {
+    const isOptional = ValueUtils.isOptional(info, envSeq);
+    if (typeof isOptional === "string") {
+      throw new Error(`Manifest of setting ${envSeq.buildPath(key)} is incorrect! Function isOptional() must return value of type boolean in case of verifying settings`);
+    }
+    if (typeof value === "undefined") {
+      if (!isOptional) {
+        throw new Error(`Setting ${envSeq.buildPath(key)} is not defined`);
+      }
+      return;
+    }
+    const valueType = ValueUtils.getValueType(value);
+    const availableTypes = ValueUtils.getAvailableTypes(info);
+    if (!valueType || !availableTypes.includes(valueType)) {
+      const type = valueType || typeof value;
+      throw new Error(`Setting ${envSeq.buildPath(key)} is incorrect! The value must be of type ${availableTypes.join(", ")}.
+Got value: ${ValueUtils.convertToString(value)} of type ${type}`);
+    }
+    if (typeof value === "string" || typeof value === "number") {
+      let availableValues = ValueUtils.getAvailableValues(info, envSeq);
+      if (availableValues) {
+        if (typeof availableValues === "object" && !Array.isArray(availableValues)) {
+          availableValues = Object.keys(availableValues);
+        }
+        if (!availableValues.includes(value)) {
+          throw new Error(`Setting ${envSeq.buildPath(key)} is incorrect! Available values are ${availableValues.join(", ")}.
+Got value: ${ValueUtils.convertToString(value)}`);
+        }
+      }
+    }
+    if (info.checkValueFunc) {
+      const err = info.checkValueFunc(value, envSeq);
+      if (err) {
+        throw new Error(`Setting ${envSeq.buildPath(key)} is incorrect! ${err}.
+Got value: ${ValueUtils.convertToString(value)}`);
+      }
+    } else if (valueType !== "object" /* object */ && ValueUtils.isEmpty(value)) {
+      if (!isOptional) {
+        throw new Error(`Setting ${envSeq.buildPath(key)} has an empty value.
+Got value: ${ValueUtils.convertToString(value)}`);
+      }
+      return;
+    }
+    if (Array.isArray(value)) {
+      if (value.includes(void 0)) {
+        throw new Error(`Array ${envSeq.buildPath(key)} has undefined values. Got array: ${JSON.stringify(value)}`);
+      }
+      if (info.arrayElement) {
+        value.forEach((item, idx) => {
+          checkParamValue(`${key} [${idx}]`, item, info.arrayElement, envSeq);
+        });
+      }
+      return;
+    }
+    if (typeof value === "object" && value !== null) {
+      checkObject(key, value, info, envSeq);
+    }
+  }
+  function checkParams(manifest, envSeq, isAnyKeyPossible) {
+    const env = envSeq.last();
+    if (!isAnyKeyPossible) {
+      const actualProperties = Object.keys(manifest);
+      Object.keys(env).forEach((key) => {
+        if (!actualProperties.includes(key)) {
+          shouter.warning(`There is no available setting with this name ${envSeq.buildPath(key)}. You might misspelled it or put it on the wrong level.`);
+        }
+      });
+    }
+    Object.entries(manifest).forEach(([key, info]) => {
+      new ParamModifier(key, info, envSeq).modifyValue();
+      checkParamValue(key, env[key], info, envSeq);
+    });
+  }
+  function printLine(level, text) {
+    const tabs = "    ".repeat(level);
+    shouter.info(`${tabs}${text}`);
+  }
+  function printParamName(name, level) {
+    const lvlSign = ">".repeat(level + 1);
+    printLine(level, `${lvlSign} ${name}:`);
+  }
+  function printParamInfo(info, level) {
+    const availableTypes = ValueUtils.getAvailableTypes(info);
+    const availableValues = ValueUtils.getAvailableValues(info);
+    printLine(level, `Описание: ${info.description}`);
+    printLine(level, `Формат: ${availableTypes.join(" | ")}`);
+    printLine(level, `Опциональный: ${ValueUtils.isOptional(info)}`);
+    if (availableValues) {
+      if (Array.isArray(availableValues)) {
+        const strValues = availableValues.map((value) => ValueUtils.convertToString(value));
+        printLine(level, `Доступные значения: ${strValues.join(", ")}`);
+      } else {
+        printLine(level, "Доступные значения:");
+        Object.entries(availableValues).forEach(([key, value]) => {
+          printLine(level + 1, `${ValueUtils.convertToString(key)} - ${value}`);
+        });
+      }
+    }
+    if (info.hasOwnProperty("defaultValue")) {
+      printLine(level, `Значение по умолчанию: ${ValueUtils.convertToString(info.defaultValue)}`);
+    }
+    if (availableTypes.includes("array" /* array */) && info.arrayElement) {
+      printLine(level, "Описание элементов массива:");
+      printParamInfo(info.arrayElement, level + 1);
+      return;
+    }
+    if (availableTypes.includes("object" /* object */)) {
+      if (info.objectValues) {
+        printLine(level, "Ключи объекта:");
+        printParamInfo(info.objectValues.key, level + 1);
+        printLine(level, "Значения объекта:");
+        printParamInfo(info.objectValues.value, level + 1);
+      } else if (info.nestedObject) {
+        printNestedParams(info, level);
+      } else {
+        shouter.info(" ");
+      }
+      return;
+    }
+    shouter.info(" ");
+  }
+  function printNestedParams(info, level) {
+    if (info.nestedObjectSwitch) {
+      const nestedObject = info.nestedObject;
+      printLine(level, `Описание свойств объекта зависит от значения ${info.nestedObjectSwitch()}:`);
+      Object.entries(nestedObject).forEach(([key, value]) => {
+        printLine(level, `'${key}':`);
+        printLine(level, `Описание: ${value.description}`);
+        printParams(value.nestedObject, level + 1);
+      });
+    } else {
+      printLine(level, "Описание свойств объекта:");
+      printParams(info.nestedObject, level + 1);
+    }
+  }
+  function printParams(params, level) {
+    if (!params) {
+      shouter.info(" ");
+      return;
+    }
+    Object.entries(params).forEach(([key, info]) => {
+      printParamName(key, level);
+      printParamInfo(info, level);
+    });
+  }
+  function verifySettings(manifest, env, envName) {
+    const envSeq = new EnvSequence(null, envName, env);
+    const reqId = lockManager.iWantLockToBe(1 /* SHARED */);
+    checkParams(manifest, envSeq, false);
+    lockManager.iDontNeedLockAnyMore(reqId);
+  }
+  function printManifest(manifest) {
+    printParams(manifest, 0);
+  }
+  function importManifestToList(manifest, listName) {
+    const manifestCsvWriter = new ManifestCsvWriter(listName);
+    const filename = "temp_env_manifest";
+    const filePath = manifestCsvWriter.writeHeader().writeParams(manifest, "").saveFile(filename);
+    const reqId = lockManager.iWantLockToBe(2 /* UNIQUE */);
+    const listTab = om.lists.listsTab().open(listName);
+    if (!listTab) {
+      throw new Error(`List '${listName}' not found`);
+    }
+    const importer = listTab.importer();
+    shouter.trace(`Sending the file to list '${listName}'`);
+    importer.setFilePath(filePath).import();
+    lockManager.iDontNeedLockAnyMore(reqId);
+    const reportFile = importer.getReportFilePath();
+    const fs = om.filesystems.local();
+    if (reportFile && fs.has(reportFile)) {
+      const hash = fs.makeGlobalFile("report_" + getDateAsSafeString(), "txt", reportFile);
+      setFileDownloadable(hash);
+    }
+    shouter.info(`The manifest has been imported to list '${listName}'`);
+  }
+  function removeNonStringifiableProps(prop, value) {
+    if (typeof value === "function") {
+      switch (prop) {
+        case "isOptional":
+        case "nestedObjectSwitch":
+          return value(void 0);
+        default:
+          return void 0;
+      }
+    }
+    if (prop === "nestedObject" && "nestedObjectSwitch" in this) {
+      const result = value;
+      for (const params of Object.values(result)) {
+        if (typeof params !== "object" && params !== null) {
+          continue;
+        }
+        params.type = "object";
+      }
+      return result;
+    }
+    return value;
+  }
+  function exportManifestAsJson(manifest, filename) {
+    const fs = om.filesystems.local();
+    const extension = "json";
+    const localName = `manifest.${extension}`;
+    shouter.trace(`Exporting the manifest as JSON to file '${filename}.${extension}'`);
+    fs.write(
+      localName,
+      JSON.stringify(manifest, removeNonStringifiableProps, 2)
+    );
+    const hash = fs.makeGlobalFile(filename, extension, localName);
+    setFileDownloadable(hash);
+  }
+
+  // workspace_typescript_modules/src/scriptRunner/scriptRunnerManifest.ts
+  var scriptRunnerManifest = {
+    SHOW_ERROR_STACK: {
+      description: "Настройка вывода стека ошибки. Если параметр не указан, стек ошибки не будет выведен.",
+      type: "boolean" /* boolean */,
+      isOptional: true,
+      defaultValue: false
+    },
+    HIDE_MODAL: {
+      description: "Настройка для скрытия модального окна.",
+      type: "boolean" /* boolean */,
+      isOptional: true,
+      defaultValue: false
+    },
+    LOGGING_TO_MULTICUBE: {
+      description: "Настройки логирования в мультикуб. Описание: https://support.optimacros.com/topic/6260/ядро-core_logger",
+      type: "object" /* object */,
+      isOptional: true
+    },
+    READ_CONSISTENCY_MODE: {
+      description: "Настройка режима чтения данных из модели (гарантии консистентности). Описание: https://github.com/optimacros/scripts_documentation/blob/main/advancedFeatues/readWriteModes.md",
+      type: "string" /* string */,
+      isOptional: true,
+      defaultValue: "Определяется настройкой в интерфейсе: Меню пользователя -> Параметры -> Режимы чтения и записи -> Режим чтения для скриптов.",
+      availableValues: {
+        "CONSISTENT_READ": "ожидание применения всех изменений",
+        "FAST_READ": 'ожидание изменения метаданных, данные читаются "как есть" на момент запроса',
+        "FAST_READ_METADATA": 'и данные, и метаданные читаются "как есть" на момент запроса'
+      }
+    }
+  };
+
+  // workspace_typescript_modules/src/lockManager/lockManagerManifest.ts
+  var lockManagerManifest = {
+    DISABLE_LOCK_SWITCHING: {
+      description: "Опция отключения управления состояниями блокировки скриптов в данном скрипте.",
+      type: "boolean" /* boolean */,
+      isOptional: true,
+      defaultValue: false
+    }
+  };
+
+  // workspace_typescript_modules/src/shouter/shouterManifest.ts
+  var availableShoutingLevels = Object.values(ShoutingLevel);
+  var shouterManifest = {
+    SHOUTER_LVL: {
+      description: "Уровень уведомлений в модальном окне скрипта.",
+      type: "string" /* string */,
+      isOptional: true,
+      availableValues: availableShoutingLevels,
+      defaultValue: DEFAULT_SHOUTER_LVL
+    },
+    SHOUTER_LOGGER_LVL: {
+      description: "Уровень уведомлений, которые отправляются в качестве записи в МК.",
+      type: "string" /* string */,
+      isOptional: true,
+      availableValues: availableShoutingLevels,
+      defaultValue: DEFAULT_SHOUTER_LVL
+    }
+  };
+
+  // workspace_typescript_modules/src/commonUtils/scriptWithSettings.ts
+  var scriptWithSettingsManifest = {
+    CORE: {
+      description: "Наименование скрипта-ядра.",
+      type: "string" /* string */,
+      isOptional: false
+    }
+  };
+
+  // workspace_typescript_modules/src/manifestVerifier/manifestSkeleton.ts
+  var basicOperationsWithManifests = {
+    SHOW_ENV_DESCRIPTION: {
+      description: "Показать описание настроек скрипта в модальном окне. Скрипт только выведет настройки и завершит работу.",
+      type: "boolean" /* boolean */,
+      isOptional: true,
+      defaultValue: false
+    },
+    IMPORT_ENV_TO_LIST: {
+      description: "Импортировать описание настроек скрипта в справочник. Скрипт только импортирует настройки и завершит работу.",
+      type: "boolean" /* boolean */,
+      isOptional: true,
+      defaultValue: false
+    },
+    IMPORT_ENV_LIST_NAME: {
+      description: "Наименование справочника, в который будут импортированы настройки. Необходимые свойства справочника: 'Display name', 'Type', 'Optional', 'Description', 'Available values', 'Default value' — все формата 'text'. Для Summary установить input.",
+      type: "string" /* string */,
+      isOptional: (envSeq) => typeof envSeq === "undefined" ? "Если включен режим импорта в справочник, то нужно и задать имя справочника" : !envSeq.last().IMPORT_ENV_TO_LIST
+    },
+    EXPORT_MANIFEST_AS_JSON: {
+      description: "Экспортировать описание настроек скрипта в файл в формате JSON. Так как JSON — текстовый формат, то сложные проверки и условная обязательность будут опущены. Скрипт только экспортирует настройки и завершит работу.",
+      type: "boolean" /* boolean */,
+      isOptional: true,
+      defaultValue: false
+    }
+  };
+  var ManifestManager = class {
+    manifest = {
+      ...scriptWithSettingsManifest,
+      ...scriptRunnerManifest,
+      ...basicOperationsWithManifests,
+      ...shouterManifest,
+      ...lockManagerManifest
+    };
+    jsonFilename = "manifest_manager";
+    exportAsJson() {
+      exportManifestAsJson(this.manifest, this.jsonFilename);
+    }
+    showDescription() {
+      printManifest(this.manifest);
+    }
+    importToList(listName) {
+      importManifestToList(this.manifest, listName);
+    }
+    verify(env) {
+      verifySettings(this.manifest, env, "ENV");
+    }
+  };
+  function processManifest(params, envManifest, manifestCallback) {
+    const manifest = new envManifest();
+    if (params.IMPORT_ENV_TO_LIST) {
+      if (!params.IMPORT_ENV_LIST_NAME) {
+        throw new Error("IMPORT_ENV_LIST_NAME is not defined");
+      }
+      manifest.importToList(params.IMPORT_ENV_LIST_NAME);
+      return false;
+    }
+    if (params.SHOW_ENV_DESCRIPTION) {
+      manifest.showDescription();
+      return false;
+    }
+    if (params.EXPORT_MANIFEST_AS_JSON) {
+      manifest.exportAsJson();
+      hideModalWithConsoleOutput();
+      return false;
+    }
+    if (manifestCallback) {
+      manifestCallback(manifest);
+    } else {
+      manifest.verify(params);
+    }
+    return true;
+  }
+
+  // workspace_typescript_modules/src/commonUtils/modelSettingUtils.ts
+  function changeCurrentScriptReadMode(newMode) {
+    if (!om.common.hasOwnProperty("setCurrentMacrosStorageReadMode") || !om.common.hasOwnProperty("getCurrentMacrosStorageReadMode")) {
+      throw new Error("This version of the platform does not support setting storage read mode");
+    }
+    const currentMode = om.common.getCurrentMacrosStorageReadMode();
+    if (newMode === currentMode) {
+      shouter.trace(`Nothing to change: storage read mode is already '${currentMode}'`);
+    } else {
+      om.common.setCurrentMacrosStorageReadMode(newMode);
+    }
+  }
+
+  // workspace_typescript_modules/src/scriptRunner/scriptRunner.ts
+  var runStatus = "OK" /* OK */;
+  function logOutput(params, start) {
+    if (!params.LOGGING_TO_MULTICUBE || params.LOGGING_TO_MULTICUBE.DISABLE) {
+      if (runStatus === "ERROR" /* ERROR */) {
+        throw new Error("Error occurred!");
+      }
+      return;
+    }
+    shouter.info("--------------------------------------------------");
+    if (!params.LOGGING_TO_MULTICUBE.LOGGER_CORE) {
+      throw new Error("No LOGGER_CORE has been found in ENV.LOGGING_TO_MULTICUBE");
+    }
+    const end = /* @__PURE__ */ new Date();
+    shouter.info(`Logging output to multicube '${params.LOGGING_TO_MULTICUBE.MULTICUBE}'`);
+    const shouterLvl = shouter.getShouterLevel();
+    if (!shouterLvl) {
+      throw new Error("Shouter level is not set!");
+    }
+    const logger = shouter.getLogger();
+    if (!logger) {
+      throw new Error("Logger is not activated!");
+    }
+    const loggerLvl = logger.getLoggerLvl();
+    if (!loggerLvl) {
+      throw new Error("Logger level is not set!");
+    }
+    const info = {
+      start: start.getTime(),
+      end: end.getTime(),
+      data: logger.getData(),
+      runStatus,
+      shouterLvl,
+      loggerLvl,
+      files: fileHashes
+    };
+    lockManager.iWantLockToBe(1 /* SHARED */);
+    const loggingScript = om.common.resultInfo().actionsInfo().makeMacrosAction(params.LOGGING_TO_MULTICUBE.LOGGER_CORE);
+    loggingScript.environmentInfo().set("ENV", params);
+    loggingScript.environmentInfo().set("info", info);
+    loggingScript.appendAfter();
+  }
+  function runScript(params, envManifest, coreCallback, manifestCallback) {
+    const start = /* @__PURE__ */ new Date();
+    try {
+      let shouterLvl = DEFAULT_SHOUTER_LVL;
+      if (typeof params.SHOUTER_LVL !== "undefined") {
+        shouterLvl = params.SHOUTER_LVL;
+      } else if (typeof params.OUTPUT_LOG !== "undefined") {
+        shouterLvl = params.OUTPUT_LOG;
+      }
+      let loggerLvl = DEFAULT_SHOUTER_LVL;
+      if (typeof params.SHOUTER_LOGGER_LVL !== "undefined") {
+        loggerLvl = params.SHOUTER_LOGGER_LVL;
+      }
+      shouter.setLevels(shouterLvl, loggerLvl);
+      lockManager.setEnableStatus(!params.DISABLE_LOCK_SWITCHING);
+      const areParamsVerified = processManifest(params, envManifest, manifestCallback);
+      if (areParamsVerified) {
+        if (params.READ_CONSISTENCY_MODE) {
+          changeCurrentScriptReadMode(params.READ_CONSISTENCY_MODE);
+        }
+        runStatus = coreCallback() ? "OK" /* OK */ : "ERROR" /* ERROR */;
+      }
+      if (params.HIDE_MODAL) {
+        hideModalWithConsoleOutput();
+      }
+    } catch (e) {
+      if (params.SHOW_ERROR_STACK) {
+        shouter.error(e.stack);
+      } else {
+        shouter.error(e.toString());
+      }
+      runStatus = "ERROR" /* ERROR */;
+    } finally {
+      logOutput(params, start);
+    }
+  }
+
+  // cores/synchronize_structure/src/version.ts
+  var VERSION = "1.7.0";
+
+  // cores/synchronize_structure/src/core.ts
+  var AbstractType = /* @__PURE__ */ ((AbstractType2) => {
+    AbstractType2["NUMBER_INT"] = "NUMBER_INT";
+    AbstractType2["NUMBER_FLOAT"] = "NUMBER_FLOAT";
+    AbstractType2["STRING_LONG"] = "STRING_LONG";
+    AbstractType2["STRING_TINY"] = "STRING_TINY";
+    AbstractType2["BOOLEAN"] = "BOOLEAN";
+    AbstractType2["DATE"] = "DATE";
+    return AbstractType2;
+  })(AbstractType || {});
+  var OmCubeType = /* @__PURE__ */ ((OmCubeType2) => {
+    OmCubeType2["ENTITY"] = "ENTITY";
+    OmCubeType2["TIME_ENTITY"] = "TIME_ENTITY";
+    OmCubeType2["VERSION"] = "VERSION";
+    OmCubeType2["LINE_ITEM_SUBSET"] = "LINE_ITEM_SUBSET";
+    OmCubeType2["NUMBER"] = "NUMBER";
+    OmCubeType2["TEXT"] = "TEXT";
+    OmCubeType2["BOOLEAN"] = "BOOLEAN";
+    OmCubeType2["DATE"] = "DATE";
+    OmCubeType2["NONE"] = "NONE";
+    return OmCubeType2;
+  })(OmCubeType || {});
+  var SOURCE = () => {
+    return {
+      MULTICUBE: MULTICUBE_Source,
+      LIST: LIST_Source
+    };
+  };
+  var DESTINATION = () => {
+    return {
+      MYSQL: MYSQL_Destination,
+      MSSQL: MSSQL_Destination,
+      CLICKHOUSE: CLICKHOUSE_Destination,
+      POSTGRESQL: POSTGRESQL_Destination
+    };
+  };
+  var Source = class {
+    constructor(params) {
+      this.params = params;
+      this.fields = [];
+      this.typeMap = null;
+      this.charReplacementMap = this.params.CHARACTER_REPLACEMENT ? this.params.CHARACTER_REPLACEMENT : {};
+    }
+    loadFields() {
+      throw new Error("Method is not implemented!");
+    }
+    convertToCommonType(internalType) {
+      if (this.typeMap === null) {
+        throw new Error("Type map is not defined!");
+      }
+      return this.typeMap[internalType];
+    }
+    exportFields() {
+      const result = [];
+      const names = /* @__PURE__ */ new Set();
+      this.fields.forEach((field) => {
+        const exportField = { ...field };
+        exportField.type = this.convertToCommonType(exportField.type);
+        if (exportField.type === null) {
+          return;
+        }
+        exportField.originalName = exportField.name;
+        exportField.name = MacroUtil.replaceChars(exportField.name, this.charReplacementMap);
+        if (names.has(exportField.name)) {
+          throw new Error(`Duplicate name has been detected while trying to add field named '${exportField.name}' with original name '${exportField.originalName}'`);
+        }
+        names.add(exportField.name);
+        result.push(exportField);
+      });
+      shouter.trace(`
+Source mutated fields are: ${JSON.stringify(result)}`);
+      return result;
+    }
+  };
+  var VIEW_Source = class _VIEW_Source extends Source {
+    static typeMapDefault = {
+      "NONE": null,
+      "DATE": "DATE",
+      "ENTITY": "STRING_TINY",
+      "TIME_ENTITY": "STRING_TINY",
+      "VERSION": "STRING_TINY",
+      "LINE_ITEM_SUBSET": "STRING_TINY",
+      "NUMBER": "NUMBER_FLOAT",
+      "BOOLEAN": "BOOLEAN",
+      "TEXT": "STRING_LONG"
+    };
+    requiredLock = 1 /* SHARED */;
+    constructor(params) {
+      super(params);
+      this.typeMap = Object.assign({}, _VIEW_Source.typeMapDefault, this.params.TYPE_MAP);
+      this.name = this.params.NAME;
+      this.view = this.params.VIEW ? this.params.VIEW : null;
+      this.viewString = this.view ? `view '${this.view}'` : "default view";
+    }
+    getGrid() {
+      throw new Error("Method is not implemented!");
+    }
+    loadFieldsFromColumns() {
+      const fields = [];
+      if (this.params.hasOwnProperty("CUBES_TO_COLUMN")) {
+        fields.push({
+          name: this.params.CUBES_TO_COLUMN.CUBE_COLUMN,
+          type: "ENTITY",
+          purpose: "PRIMARY KEY"
+        });
+        fields.push({
+          name: this.params.CUBES_TO_COLUMN.VALUE_COLUMN,
+          type: this.params.CUBES_TO_COLUMN.FORMAT
+        });
+      } else {
+        const grid = this.getGrid();
+        const req = lockManager.iWantLockToBe(this.requiredLock);
+        const generator = grid.range(0, 1, 0, -1).generator();
+        for (const chunk of generator) {
+          chunk.columns().all().forEach((labelGroup) => {
+            const columnName = labelGroup.first().name();
+            const columnType = labelGroup.cells().first().getFormatType();
+            fields.push({ name: columnName, type: columnType });
+          });
+        }
+        lockManager.iDontNeedLockAnyMore(req);
+      }
+      this.fields = this.fields.concat(fields);
+      return this;
+    }
+    loadFieldsFromRows() {
+      if (!this.params.hasOwnProperty("INCLUDE_DIMENSIONS") || !this.params.INCLUDE_DIMENSIONS) {
+        return this;
+      }
+      const fields = [];
+      const grid = this.getGrid();
+      const req = lockManager.iWantLockToBe(this.requiredLock);
+      grid.getDefinitionInfo().getRowDimensions().forEach((dim) => {
+        fields.push({ name: dim.getDimensionEntity().name(), type: "ENTITY", purpose: "PRIMARY KEY" });
+      });
+      lockManager.iDontNeedLockAnyMore(req);
+      this.fields = this.fields.concat(fields);
+      return this;
+    }
+    loadFields() {
+      shouter.info(`Loading fields from a ${this.constructor.name.split("_")[0]}'s '${this.name}' ${this.viewString}`);
+      this.loadFieldsFromRows();
+      this.loadFieldsFromColumns();
+      shouter.trace(`
+Source fields are: ${JSON.stringify(this.fields)}`);
+      return this;
+    }
+  };
+  var LIST_Source = class extends VIEW_Source {
+    getGrid() {
+      const req = lockManager.iWantLockToBe(this.requiredLock);
+      const tab = om.lists.listsTab().open(this.name);
+      const grid = tab.pivot(this.view).create();
+      lockManager.iDontNeedLockAnyMore(req);
+      return grid;
+    }
+    loadFieldsFromRows() {
+      if (!this.params.hasOwnProperty("INCLUDE_DIMENSIONS") || !this.params.INCLUDE_DIMENSIONS) {
+        return this;
+      }
+      if (this.params.hasOwnProperty("USE_LIST_NAME_NOT_ENTITY") && this.params.USE_LIST_NAME_NOT_ENTITY) {
+        this.fields.push({ name: this.name, type: "ENTITY", purpose: "PRIMARY KEY" });
+      } else {
+        super.loadFieldsFromRows();
+      }
+      return this;
+    }
+  };
+  var MULTICUBE_Source = class extends VIEW_Source {
+    getGrid() {
+      const req = lockManager.iWantLockToBe(this.requiredLock);
+      const tab = om.multicubes.multicubesTab().open(this.name);
+      const grid = tab.pivot(this.view).create();
+      lockManager.iDontNeedLockAnyMore(req);
+      return grid;
+    }
+  };
+  var Destination = class {
+    typeMap;
+    shieldingPattern;
+    params;
+    inputFields = [];
+    convertedFields = [];
+    existingFields = {};
+    newFields = [];
+    redundantFields = [];
+    mismatchedFields = [];
+    deleteFields = [];
+    overwriteFields;
+    constructor(params) {
+      this.params = params;
+      this.overwriteFields = this.params.ADD_FIELDS ? this.params.ADD_FIELDS : {};
+    }
+    createOrUpdate() {
+      if (this.isDestExists()) {
+        this.loadExistingFields().matchFields().updateFields();
+      } else {
+        this.createDestination();
+      }
+    }
+    isDestExists() {
+      throw new Error("Method is not implemented!");
+    }
+    createDestination() {
+      throw new Error("Method is not implemented!");
+    }
+    dropDestination() {
+      throw new Error("Method is not implemented!");
+    }
+    convertToInternalTypesAndOverwriteFields() {
+      this.inputFields.forEach((field) => {
+        const convertedField = { ...field };
+        if (this.overwriteFields.hasOwnProperty(field.name)) {
+          convertedField.type = this.overwriteFields[field.name];
+          delete this.overwriteFields[field.name];
+        } else {
+          convertedField.type = this.typeMap[field.type];
+        }
+        this.convertedFields.push(convertedField);
+      });
+      Object.keys(this.overwriteFields).forEach((fieldName) => {
+        this.convertedFields.push({ name: fieldName, type: this.overwriteFields[fieldName] });
+      });
+      return this;
+    }
+    setInputFields(fields) {
+      this.inputFields = fields;
+      return this;
+    }
+    loadExistingFields() {
+      throw new Error("Method is not implemented!");
+    }
+    matchFields() {
+      const existingFieldNames = Object.keys(this.existingFields);
+      this.convertedFields.forEach((field) => {
+        const index = existingFieldNames.indexOf(field.name);
+        if (index === -1) {
+          this.newFields.push(field);
+        } else {
+          if (!field.type.startsWith(this.existingFields[field.name])) {
+            shouter.info(`Source field '${field.name}' has internal type '${field.type}' but the matching destination field has internal type '${this.existingFields[field.name]}'`, true);
+            this.mismatchedFields.push(field);
+          }
+          existingFieldNames.splice(index, 1);
+        }
+      });
+      this.redundantFields = existingFieldNames;
+      if (this.params.FORCE_TYPE_MATCHING && this.mismatchedFields.length > 0) {
+        shouter.info(`
+As force type matching is on adding ${this.mismatchedFields.length} field(s) of mismatched type to delete candidates`);
+        this.mismatchedFields.forEach((field) => {
+          this.deleteFields.push(field.name);
+          this.newFields.push(field);
+        });
+      }
+      if (this.params.REDUNDANT_DELETION && this.redundantFields.length > 0) {
+        shouter.info(`
+As redundant deletion is on adding ${this.redundantFields.length} redundant field(s) to delete candidates`);
+        this.deleteFields = this.deleteFields.concat(this.redundantFields);
+      }
+      return this;
+    }
+    excludeFromDeleteAndNewFields(field) {
+      const deleteIndex = this.deleteFields.indexOf(field);
+      this.deleteFields.splice(deleteIndex, 1);
+      const newIndex = MacroUtil.indexOfDict(this.newFields, field, "name");
+      if (newIndex != -1) {
+        this.newFields.splice(newIndex, 1);
+      }
+    }
+    updateFields() {
+      throw new Error("Method is not implemented!");
+    }
+    shield(text) {
+      return MacroUtil.variableReplacer({
+        VALUE: () => {
+          return text;
+        }
+      }, this.shieldingPattern);
+    }
+  };
+  var SQL_Destination = class extends Destination {
+    table;
+    schema;
+    fullTableName;
+    conn;
+    columnNameFieldName = "COLUMN_NAME";
+    typeColumnName;
+    doAddPrimaryKey;
+    existingPrimaryKey = [];
+    desiredPrimaryKey = [];
+    indices = [];
+    constructor(params) {
+      super(params);
+      this.conn = this.getConn();
+      this.table = this.params.TABLE;
+      this.doAddPrimaryKey = this.params.hasOwnProperty("PRIMARY_KEY_FROM_SOURCE") && this.params.PRIMARY_KEY_FROM_SOURCE;
+    }
+    getConnBuilder() {
+      throw new Error("Method is not implemented");
+    }
+    getConn() {
+      if (!this.conn) {
+        this.conn = this.getConnBuilder().setHost(this.params.CONNECTION.HOST).setPort(this.params.CONNECTION.hasOwnProperty("PORT") ? this.params.CONNECTION.PORT : -1).setUsername(this.params.CONNECTION.USER).setPassword(om.connectors.http().base64Decode(this.params.CONNECTION.PASSWORD).toString()).setDatabase(this.params.CONNECTION.DB).load();
+      }
+      return this.conn;
+    }
+    constructFullTableName() {
+      if (this.schema) {
+        this.fullTableName = `${this.shield(this.schema)}.${this.shield(this.table)}`;
+      } else {
+        this.fullTableName = this.shield(this.table);
+      }
+      return this;
+    }
+    setInputFields(fields) {
+      this.inputFields = fields;
+      this.inputFields.forEach((field) => {
+        if (field.hasOwnProperty("purpose") && field.purpose === "PRIMARY KEY") {
+          this.desiredPrimaryKey.push(field.name);
+        }
+      });
+      return this;
+    }
+    getTableExistsQuery() {
+      return `SELECT *
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_NAME = '${this.table}'
+                ${this.schema ? `AND TABLE_SCHEMA = '${this.schema}'` : ""}`;
+    }
+    isDestExists() {
+      shouter.info(`Checking if the SQL table ${this.fullTableName} exists`);
+      const queryBuilder = this.conn.qb();
+      const query = this.getTableExistsQuery();
+      const result = queryBuilder.execute(query, []);
+      switch (result.count()) {
+        case -1:
+        case 1:
+          return true;
+        case 0:
+          if (this.params.hasOwnProperty("ALLOW_DEST_CREATION") && this.params.ALLOW_DEST_CREATION) {
+            return false;
+          } else {
+            throw new Error(`Table ${this.fullTableName} does not exist in the database '${this.params.CONNECTION.DB}'. Use 'ALLOW_DEST_CREATION' for table creation`);
+          }
+        default:
+          throw new Error(`There are ${result.count()} entries (expecting 1 or 0) in the table ${this.fullTableName} while checking existence using the database '${this.params.CONNECTION.DB}'`);
+      }
+    }
+    dropDestination() {
+      const queryBuilder = this.conn.qb();
+      const dropQuery = `DROP TABLE ${this.fullTableName}`;
+      shouter.info(`Dropping table ${this.fullTableName} by query '${dropQuery}'`);
+      queryBuilder.execute(dropQuery, []);
+      return this;
+    }
+    getCreateQuery() {
+      throw new Error("Method is not implemented!");
+    }
+    createDestination() {
+      const queryBuilder = this.conn.qb();
+      if (this.convertedFields.length == 0) {
+        shouter.info(`
+Can't create SQL table ${this.fullTableName} with 0 columns`);
+        return this;
+      } else {
+        shouter.info(`
+Creating SQL table ${this.fullTableName}`);
+        shouter.debug(`with fields: ${JSON.stringify(this.convertedFields)}
+`);
+        const createRequest = this.getCreateQuery();
+        shouter.debug(`CREATE request:
+${createRequest}
+`);
+        queryBuilder.execute(createRequest, []);
+        shouter.info(`SQL table ${this.fullTableName} has been successfully created`);
+        return this;
+      }
+    }
+    modifyDestination() {
+      const queryBuilder = this.conn.qb();
+      if (this.deleteFields.length > 0) {
+        shouter.info(`
+Deleting ${this.deleteFields.length} field(s) in SQL table ${this.fullTableName}`);
+        shouter.debug(`Fields to be deleted: ${JSON.stringify(this.deleteFields)}
+`);
+        const deleteRequest = this.getDeleteQuery();
+        shouter.debug(`DROP request:
+${deleteRequest}
+`);
+        queryBuilder.execute(deleteRequest, []);
+        this.rebuildIfNeeded();
+      }
+      if (this.newFields.length == 0) {
+        shouter.info(`
+Nothing to update in the SQL table ${this.fullTableName}`);
+      } else {
+        shouter.info(`
+Updating ${this.newFields.length} field(s) in SQL table ${this.fullTableName}`);
+        shouter.debug(`New fields: ${JSON.stringify(this.newFields)}
+`);
+        const addRequest = this.getAddQuery();
+        shouter.debug(`ADD request:
+${addRequest}
+`);
+        queryBuilder.execute(addRequest, []);
+        shouter.info(`SQL table ${this.fullTableName} has been successfully updated`);
+      }
+      return this;
+    }
+    loadExistingFields() {
+      shouter.info(`Loading fields from SQL table ${this.fullTableName}`);
+      const queryBuilder = this.conn.qb();
+      const queryColumns = `SELECT *
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = '${this.table}'
+                    ${this.schema ? `AND TABLE_SCHEMA = '${this.schema}'` : ""}`;
+      const result = queryBuilder.execute(queryColumns, []);
+      for (const row of result.generator()) {
+        if (!row.hasOwnProperty(this.columnNameFieldName) || !row.hasOwnProperty(this.typeColumnName)) {
+          throw new Error("Something went wrong: table with column types does not have column type or column name field");
+        }
+        this.existingFields[row[this.columnNameFieldName]] = row[this.typeColumnName].toUpperCase();
+      }
+      this.loadKeysAndIndices();
+      return this;
+    }
+    loadKeysAndIndices() {
+      throw new Error("Method is not implemented");
+    }
+    reviewDeleteCandidates() {
+      this.existingPrimaryKey.forEach((field) => {
+        if (this.deleteFields.includes(field)) {
+          shouter.info(`Field '${field}' was excluded from delete candidates as it is used as a primary key in SQL table ${this.fullTableName}`);
+          this.excludeFromDeleteAndNewFields(field);
+        }
+      });
+      this.indices.forEach((field) => {
+        if (this.deleteFields.includes(field)) {
+          shouter.info(`Field '${field}' was excluded from delete candidates as it is used as an index in SQL table ${this.fullTableName}`);
+          this.excludeFromDeleteAndNewFields(field);
+        }
+      });
+    }
+    isPrimaryKeyCongruent() {
+      let mismatch = false;
+      mismatch ||= this.existingPrimaryKey.some((field) => {
+        if (!this.desiredPrimaryKey.includes(field)) {
+          return true;
+        }
+      });
+      mismatch ||= this.desiredPrimaryKey.some((field) => {
+        if (!this.existingPrimaryKey.includes(field)) {
+          return true;
+        }
+      });
+      return !mismatch;
+    }
+    getAddQuery() {
+      throw new Error("Method is not implemented!");
+    }
+    getDeleteQuery() {
+      throw new Error("Method is not implemented!");
+    }
+    rebuildIfNeeded() {
+      return this;
+    }
+    updateFields() {
+      if (this.doAddPrimaryKey && !this.isPrimaryKeyCongruent()) {
+        shouter.info(`
+SQL table ${this.fullTableName} has primary key on columns ${JSON.stringify(this.existingPrimaryKey)} but desired columns are ${JSON.stringify(this.desiredPrimaryKey)}. Table will be dropped and then recreated`);
+        this.dropDestination();
+        this.createDestination();
+        return this;
+      }
+      this.reviewDeleteCandidates();
+      this.modifyDestination();
+      return this;
+    }
+  };
+  var MYSQL_Destination = class _MYSQL_Destination extends SQL_Destination {
+    static typeMapDefault = {
+      NUMBER_INT: "INT",
+      NUMBER_FLOAT: "DECIMAL(24,9)",
+      STRING_LONG: "TEXT",
+      STRING_TINY: "VARCHAR(100)",
+      BOOLEAN: "TINYINT(1)",
+      DATE: "CHAR(10)"
+    };
+    typeColumnName = "COLUMN_TYPE";
+    shieldingPattern = "`{VALUE}`";
+    constructor(params) {
+      super(params);
+      this.typeMap = Object.assign({}, _MYSQL_Destination.typeMapDefault, this.params.TYPE_MAP);
+      this.schema = this.params.CONNECTION.DB;
+      this.constructFullTableName();
+    }
+    getConnBuilder() {
+      return om.connectors.mysql();
+    }
+    loadKeysAndIndices() {
+      const queryBuilder = this.conn.qb();
+      const queryKeysAndIndices = `SHOW INDEX FROM ${this.fullTableName} FROM \`${this.params.CONNECTION.DB}\`;`;
+      const result = queryBuilder.execute(queryKeysAndIndices, []);
+      for (const row of result.generator()) {
+        if (!row.hasOwnProperty("Key_name") || !row.hasOwnProperty("Column_name")) {
+          throw new Error("Something went wrong: constraint table does not have constraint type or column name field");
+        }
+        if (row.Key_name === "PRIMARY") {
+          this.existingPrimaryKey.push(row.Column_name);
+        } else {
+          this.indices.push(row.Column_name);
+        }
+      }
+      return this;
+    }
+    getCreateQuery() {
+      const addList = [];
+      this.convertedFields.forEach((field) => {
+        addList.push(`
+${this.shield(field.name)} ${field.type}`);
+      });
+      const primaryKeyList = [];
+      this.desiredPrimaryKey.forEach((column) => {
+        primaryKeyList.push(this.shield(column));
+      });
+      return `CREATE TABLE ${this.fullTableName} (${addList.join(",")}
+                ${this.doAddPrimaryKey ? `, PRIMARY KEY (${primaryKeyList.join(", ")})` : ""});`;
+    }
+    getAddQuery() {
+      const addList = [];
+      this.newFields.forEach((field) => {
+        addList.push(`
+ADD ${this.shield(field.name)} ${field.type}`);
+      });
+      return `ALTER TABLE ${this.fullTableName} ${addList.join(",")};`;
+    }
+    getDeleteQuery() {
+      const deleteList = [];
+      this.deleteFields.forEach((field) => {
+        deleteList.push(`
+DROP ${this.shield(field)}`);
+      });
+      return `ALTER TABLE ${this.fullTableName} ${deleteList.join(",")};`;
+    }
+  };
+  var MSSQL_Destination = class _MSSQL_Destination extends SQL_Destination {
+    static typeMapDefault = {
+      NUMBER_INT: "INT",
+      NUMBER_FLOAT: "FLOAT",
+      STRING_LONG: "NVARCHAR(max)",
+      STRING_TINY: "NVARCHAR(100)",
+      BOOLEAN: "BIT",
+      DATE: "NCHAR(10)"
+    };
+    typeColumnName = "DATA_TYPE";
+    shieldingPattern = "[{VALUE}]";
+    constructor(params) {
+      super(params);
+      this.typeMap = Object.assign({}, _MSSQL_Destination.typeMapDefault, this.params.TYPE_MAP);
+      this.schema = this.params.hasOwnProperty("SCHEMA") ? this.params.SCHEMA : null;
+      this.constructFullTableName();
+    }
+    getConnBuilder() {
+      const builder = om.connectors.sqlServer().setDriver(this.params.CONNECTION.DRIVER ? this.params.CONNECTION.DRIVER : null);
+      if (this.params.CONNECTION.REQUEST_TIMEOUT) {
+        builder.setRequestTimeout(this.params.CONNECTION.REQUEST_TIMEOUT);
+      }
+      return builder;
+    }
+    loadKeysAndIndices() {
+      const queryBuilder = this.conn.qb();
+      const queryKeysAndIndices = `SELECT * FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE
+                                       JOIN sys.key_constraints
+                                           on sys.key_constraints.name = INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE.CONSTRAINT_NAME
+                                   WHERE TABLE_NAME = '${this.table}'
+                                   ${this.schema ? `AND TABLE_SCHEMA = '${this.schema}'` : ""}`;
+      const result = queryBuilder.execute(queryKeysAndIndices, []);
+      for (const row of result.generator()) {
+        if (row.type === "PK") {
+          this.existingPrimaryKey.push(row.COLUMN_NAME);
+        } else {
+          this.indices.push(row.COLUMN_NAME);
+        }
+      }
+      return this;
+    }
+    getCreateQuery() {
+      const addList = [];
+      this.convertedFields.forEach((field) => {
+        if (this.doAddPrimaryKey && this.desiredPrimaryKey.includes(field.name)) {
+          addList.push(`
+${this.shield(field.name)} ${field.type} NOT NULL`);
+        } else {
+          addList.push(`
+${this.shield(field.name)} ${field.type} NULL`);
+        }
+      });
+      const primaryKeyList = [];
+      this.desiredPrimaryKey.forEach((column) => {
+        primaryKeyList.push(this.shield(column));
+      });
+      return `CREATE TABLE ${this.fullTableName} (${addList.join(",")}
+                ${this.doAddPrimaryKey ? `, CONSTRAINT "PK_${this.table}" PRIMARY KEY CLUSTERED (${primaryKeyList.join(", ")})` : ""});`;
+    }
+    getAddQuery() {
+      const addList = [];
+      this.newFields.forEach((field) => {
+        addList.push(`${this.shield(field.name)} ${field.type} NULL`);
+      });
+      return `ALTER TABLE ${this.fullTableName} ADD ${addList.join(",")};`;
+    }
+    getDeleteQuery() {
+      const deleteList = [];
+      this.deleteFields.forEach((field) => {
+        deleteList.push(`${this.shield(field)}`);
+      });
+      return `ALTER TABLE ${this.fullTableName} DROP COLUMN ${deleteList.join(",")};`;
+    }
+    rebuildIfNeeded() {
+      shouter.info(`Rebuilding table '${this.fullTableName}' as some fields were deleted and MS SQL does not free up space on its own`);
+      const queryBuilder = this.conn.qb();
+      queryBuilder.execute(`ALTER TABLE ${this.fullTableName} REBUILD;`, []);
+      return this;
+    }
+  };
+  var CLICKHOUSE_Destination = class _CLICKHOUSE_Destination extends SQL_Destination {
+    static typeMapDefault = {
+      NUMBER_INT: "Int32",
+      NUMBER_FLOAT: "Float64",
+      STRING_LONG: "String",
+      STRING_TINY: "String",
+      BOOLEAN: "Bool",
+      DATE: "String"
+    };
+    shieldingPattern = "`{VALUE}`";
+    NULLABLE_TYPE_DEFINITION = "Nullable";
+    NULLABLE_TYPE_REGEXP = /Nullable\(.*\)/;
+    // engines that support table modification ALTER TABLE
+    MERGETREE_ENGINE_REGEXP = /.*MergeTree$/;
+    SUPPORT_ALTER_ENGINES = ["Merge", "Distributed"];
+    internalTableEngine;
+    constructor(params) {
+      super(params);
+      this.typeMap = Object.assign({}, _CLICKHOUSE_Destination.typeMapDefault, this.params.TYPE_MAP);
+      this.schema = this.params.CONNECTION.DB;
+      this.constructFullTableName();
+    }
+    getConnBuilder() {
+      return om.connectors.mysql();
+    }
+    getTableExistsQuery() {
+      return `SELECT name FROM system.tables WHERE name = '${this.table}';`;
+    }
+    loadKeysAndIndices() {
+      const queryBuilder = this.conn.qb();
+      const whereQueryPart = `WHERE name == '${this.table}' AND database == '${this.params.CONNECTION.DB}'`;
+      let result = queryBuilder.execute(`SELECT primary_key FROM system.tables ${whereQueryPart};`, []);
+      for (const row of result.generator()) {
+        if (row.primary_key !== "") {
+          const keys = row.primary_key.split(", ").map((key) => key.replace(/^`|`$/g, ""));
+          this.existingPrimaryKey.push(...keys);
+        }
+      }
+      result = queryBuilder.execute(`SELECT name FROM system.data_skipping_indices ${whereQueryPart};`, []);
+      for (const row of result.generator()) {
+        this.indices.push(row.name);
+      }
+      return this;
+    }
+    loadExistingFields() {
+      shouter.info(`Loading fields from SQL table ${this.fullTableName}`);
+      const queryBuilder = this.conn.qb();
+      const result = queryBuilder.execute(`DESCRIBE TABLE ${this.fullTableName};`, []);
+      for (const row of result.generator()) {
+        const fullType = row.type;
+        if (this.NULLABLE_TYPE_REGEXP.test(fullType)) {
+          const typeStartPos = (this.NULLABLE_TYPE_DEFINITION + "(").length;
+          this.existingFields[row.name] = fullType.substring(typeStartPos, fullType.length - 1);
+        } else {
+          this.existingFields[row.name] = fullType;
+        }
+      }
+      this.loadKeysAndIndices();
+      return this;
+    }
+    loadTableEngine() {
+      if (this.internalTableEngine) {
+        return this;
+      }
+      shouter.info(`Loading internal ENGINE type of SQL table ${this.fullTableName}`);
+      const queryBuilder = this.conn.qb();
+      let engineFullInfo = null;
+      const result = queryBuilder.execute(`SELECT engine, engine_full FROM system.tables WHERE name = '${this.table}';`, []);
+      for (const row of result.generator()) {
+        this.internalTableEngine = row.engine;
+        engineFullInfo = row.engine_full;
+      }
+      shouter.info(`Internal table ENGINE with parameters is "${engineFullInfo}"`);
+      return this;
+    }
+    getCreateQuery() {
+      const addList = [];
+      const primaryKeyList = [];
+      this.convertedFields.forEach((field) => {
+        if (this.doAddPrimaryKey && this.desiredPrimaryKey.includes(field.name)) {
+          addList.push(`
+${this.shield(field.name)} ${field.type} NOT NULL`);
+        } else {
+          addList.push(`
+${this.shield(field.name)} ${field.type} NULL`);
+        }
+      });
+      this.desiredPrimaryKey.forEach((column) => {
+        primaryKeyList.push(this.shield(column));
+      });
+      return `CREATE TABLE ${this.fullTableName} (${addList.join(",")}
+                ${this.doAddPrimaryKey ? `, PRIMARY KEY (${primaryKeyList.join(", ")})` : ""}
+                ) ENGINE = ${this.params.TABLE_ENGINE};`;
+    }
+    getAddQuery() {
+      const addList = [];
+      this.newFields.forEach((field) => {
+        addList.push(`
+ADD COLUMN ${this.shield(field.name)} ${this.NULLABLE_TYPE_DEFINITION}(${field.type})`);
+      });
+      return `ALTER TABLE ${this.fullTableName} ${addList.join(",")};`;
+    }
+    getDeleteQuery() {
+      const deleteList = [];
+      this.deleteFields.forEach((field) => {
+        deleteList.push(`
+DROP COLUMN ${this.shield(field)}`);
+      });
+      return `ALTER TABLE ${this.fullTableName} ${deleteList.join(",")};`;
+    }
+    updateFields() {
+      if (this.doAddPrimaryKey && !this.isPrimaryKeyCongruent()) {
+        shouter.info(`
+SQL table ${this.fullTableName} has primary key on columns ${JSON.stringify(this.existingPrimaryKey)} but desired columns are ${JSON.stringify(this.desiredPrimaryKey)}. Table will be dropped and then recreated`);
+        this.recreateTable();
+        return this;
+      }
+      this.reviewDeleteCandidates();
+      if (this.deleteFields.length || this.newFields.length) {
+        this.loadTableEngine();
+        if (!(this.MERGETREE_ENGINE_REGEXP.test(this.internalTableEngine) || this.SUPPORT_ALTER_ENGINES.includes(this.internalTableEngine))) {
+          shouter.info(`
+SQL table ${this.fullTableName} will be dropped and then recreated because table modification (ALTER TABLE) doesn't work for engine ${this.internalTableEngine}`);
+          this.recreateTable();
+        } else {
+          this.modifyDestination();
+        }
+      } else {
+        shouter.info(`
+Nothing to update in the SQL table ${this.fullTableName}`);
+      }
+      return this;
+    }
+    recreateTable() {
+      this.loadTableEngine();
+      this.dropDestination();
+      this.createDestination();
+    }
+  };
+  var POSTGRESQL_Destination = class _POSTGRESQL_Destination extends MYSQL_Destination {
+    static typeMapDefault = {
+      NUMBER_INT: "BIGINT",
+      NUMBER_FLOAT: "DOUBLE PRECISION",
+      STRING_LONG: "TEXT",
+      STRING_TINY: "CHARACTER VARYING(100)",
+      BOOLEAN: "BOOLEAN",
+      DATE: "CHARACTER(10)"
+    };
+    columnNameFieldName = "column_name";
+    typeColumnName = "data_type";
+    shieldingPattern = '"{VALUE}"';
+    constructor(params) {
+      super(params);
+      this.typeMap = Object.assign({}, _POSTGRESQL_Destination.typeMapDefault, this.params.TYPE_MAP);
+      this.schema = this.params.hasOwnProperty("SCHEMA") ? this.params.SCHEMA : null;
+      this.constructFullTableName();
+    }
+    getConnBuilder() {
+      return om.connectors.postgresql();
+    }
+    loadKeysAndIndices() {
+      const queryBuilder = this.conn.qb();
+      const queryKeysAndIndices = `SELECT * 
+            FROM information_schema.table_constraints 
+            JOIN information_schema.constraint_column_usage USING (constraint_schema, constraint_name)
+                WHERE information_schema.table_constraints.table_name = '${this.table}'
+                ${this.schema ? `AND information_schema.table_constraints.table_schema = '${this.schema}'` : ""};`;
+      const result = queryBuilder.execute(queryKeysAndIndices, []);
+      for (const row of result.generator()) {
+        if (!row.hasOwnProperty("constraint_type") || !row.hasOwnProperty("column_name")) {
+          throw new Error("Something went wrong: constraint table does not have constraint type or column name field");
+        }
+        if (row.constraint_type === "PRIMARY KEY") {
+          this.existingPrimaryKey.push(row.column_name);
+        } else {
+        }
+      }
+      return this;
+    }
+  };
+  var MacroUtil = class {
+    /**
+    * @returns the index of a dict in the list witch has provided value of the provided key
+    */
+    static indexOfDict(list, value, key) {
+      let result = -1;
+      list.some((el, index) => {
+        if (el[key] == value) {
+          result = index;
+          return true;
+        }
+      });
+      return result;
+    }
+    static replaceChars(str, charMap) {
+      let result = str;
+      Object.keys(charMap).forEach((char) => {
+        result = result.split(char).join(charMap[char]);
+      });
+      return result;
+    }
+    static variableReplacer(variableMap, input) {
+      let result = `${input}`;
+      Object.keys(variableMap).forEach((variableName) => {
+        const collection = result.split(`{${variableName}}`);
+        if (collection.length !== 1) {
+          result = collection.join(variableMap[variableName]());
+        }
+      });
+      return result;
+    }
+  };
+  var Macros = class {
+    constructor(request) {
+      this.sourceTypes = SOURCE();
+      this.destinationTypes = DESTINATION();
+      this.source = new this.sourceTypes[request.SRC.TYPE](request.SRC.PARAMS);
+      this.destination = new this.destinationTypes[request.DEST.TYPE](request.DEST.PARAMS);
+    }
+    run() {
+      this.source.loadFields();
+      this.destination.setInputFields(this.source.exportFields()).convertToInternalTypesAndOverwriteFields().createOrUpdate();
+    }
+  };
+
+  // cores/synchronize_structure/src/manifest.ts
+  var AVAILABLE_OM_TYPES = Object.values(OmCubeType);
+  var AVAILABLE_ABSTRACT_TYPES = Object.values(AbstractType);
+  var EnvironmentManifest = class extends ManifestManager {
+    commonNestedObjectSwitch = (envSeq) => typeof envSeq === "undefined" ? "TYPE" : envSeq.last().TYPE;
+    jsonFilename = `synchronize_structure_v${VERSION}_manifest`;
+    constructor() {
+      super();
+      this.manifest = { ...this.manifest, ...this.build() };
+    }
+    checkPositiveNumber(value) {
+      return (!Number.isInteger(value) || value <= 0) && "The value must be integer and greater than 0";
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    checkAllowEmptyString(_value) {
+      return false;
+    }
+    getSharedSourceParams() {
+      return {
+        CHARACTER_REPLACEMENT: {
+          description: "Замена символа(ов) в названии колонки источника на другие символы. Полезно, если приёмник не переваривает специальные символы в названиях. Не забывайте про экранирование (например, чтобы заменить обратный слэш, нужно написать '\\\\').",
+          type: "object",
+          isOptional: true,
+          objectValues: {
+            key: {
+              description: "Символы, которые нужно заменить.",
+              type: "string",
+              isOptional: false
+            },
+            value: {
+              description: "Символы, которые будут подставлены.",
+              type: "string",
+              isOptional: false,
+              checkValueFunc: this.checkAllowEmptyString
+            }
+          }
+        }
+      };
+    }
+    getSrcTypeMapParams(availableSourceTypes, defaultValue) {
+      return {
+        description: "Соответствие типов источника и абстрактных типов. Указывать все не обязательно, указанные здесь перепишут те, которые установлены по умолчанию.",
+        type: "object",
+        isOptional: true,
+        objectValues: {
+          key: {
+            description: "Тип источника.",
+            type: "string",
+            isOptional: false,
+            availableValues: availableSourceTypes
+          },
+          value: {
+            description: "Абстрактный тип.",
+            type: "string",
+            isOptional: false,
+            availableValues: AVAILABLE_ABSTRACT_TYPES
+          }
+        },
+        defaultValue
+      };
+    }
+    getSharedViewSourceParams() {
+      return {
+        NAME: {
+          description: "Наименование справочника или мультикуба.",
+          type: "string",
+          isOptional: false
+        },
+        VIEW: {
+          description: "Наименование представления. В первой строке не должно быть None-ячеек (тотал-элемент, у которого summary — None). Если МК, то кубы — в колонках, а все измерения — в строках.",
+          type: ["string", "null"],
+          isOptional: true,
+          defaultValue: null
+        },
+        TYPE_MAP: this.getSrcTypeMapParams(AVAILABLE_OM_TYPES, VIEW_Source.typeMapDefault),
+        ...this.getSharedSourceParams(),
+        INCLUDE_DIMENSIONS: {
+          description: "Добавлять ли колонку измерения(ий) МК или справочника.",
+          type: "boolean",
+          isOptional: true,
+          defaultValue: false
+        },
+        CUBES_TO_COLUMN: {
+          description: "Опция нужна, если необходимо вывести таблицу, в которой названия показателей (кубов) будут в единой колонке — т. е. таблица будет в супер плоском виде с одной единственной колонкой значений.",
+          type: "object",
+          isOptional: true,
+          nestedObject: {
+            CUBE_COLUMN: {
+              description: "Название колонки для кубов/свойств справочника. Формат будет установлен автоматически на 'ENTITY'.",
+              type: "string",
+              isOptional: false
+            },
+            VALUE_COLUMN: {
+              description: "Название колонки для значений кубов/свойств справочника.",
+              type: "string",
+              isOptional: false
+            },
+            FORMAT: {
+              description: "Формат колонки для значений кубов/свойств справочника.",
+              type: "string",
+              isOptional: false,
+              availableValues: AVAILABLE_OM_TYPES
+            }
+          }
+        }
+      };
+    }
+    getListSourceParams() {
+      return {
+        ...this.getSharedViewSourceParams(),
+        USE_LIST_NAME_NOT_ENTITY: {
+          description: "По умолчанию в справочниках колонка справочника называется 'ENTITY'. Если включить эту опцию, то вместо этого будет взято название справочника.",
+          type: "boolean",
+          isOptional: true,
+          defaultValue: false
+        }
+      };
+    }
+    getSource() {
+      const SOURCE_TYPES = Object.keys(SOURCE());
+      return {
+        TYPE: {
+          description: "Тип источника.",
+          type: "string",
+          isOptional: false,
+          availableValues: SOURCE_TYPES
+        },
+        PARAMS: {
+          description: "Настройки источника. Набор настроек зависит от значения TYPE.",
+          type: "object",
+          isOptional: false,
+          nestedObjectSwitch: this.commonNestedObjectSwitch,
+          nestedObject: {
+            "MULTICUBE": {
+              description: "Настройки источника MULTICUBE.",
+              nestedObject: this.getSharedViewSourceParams()
+            },
+            "LIST": {
+              description: "Настройки источника LIST.",
+              nestedObject: this.getListSourceParams()
+            }
+          }
+        }
+      };
+    }
+    getSharedDestinationParams() {
+      return {
+        FORCE_TYPE_MATCHING: {
+          description: "Если установлен это параметр, то несовпадение типов источника с приёмником приведёт к изменению типов в приёмнике.",
+          type: "boolean",
+          isOptional: true,
+          defaultValue: false
+        },
+        REDUNDANT_DELETION: {
+          description: "Опция удаления тех колонок, которых нет в источнике (не затрагивает колонки, входящие в первичный ключ или индексы, если такие распознаются скриптом).",
+          type: "boolean",
+          isOptional: true,
+          defaultValue: false
+        },
+        ADD_FIELDS: {
+          description: "Дополнительные колонки, которые нужно создать, или прямое указание соответствия колонок типу приёмника, если нужно переписать устанавливаемые автоматически.",
+          type: "object",
+          isOptional: true,
+          objectValues: {
+            key: {
+              description: "Название колонки, которую нужно добавить или для которой нужно указать специальный тип.",
+              type: "string",
+              isOptional: false
+            },
+            value: {
+              description: "Тип приёмника.",
+              type: "string",
+              isOptional: false
+            }
+          }
+        }
+      };
+    }
+    getBasicSqlDbConnectionParams() {
+      return {
+        HOST: {
+          description: "Имя хоста для подключения к базе данных.",
+          type: "string",
+          isOptional: false
+        },
+        PORT: {
+          description: "Порт для подключения к базе данных.",
+          type: "number",
+          isOptional: true,
+          checkValueFunc: this.checkPositiveNumber,
+          defaultValue: -1
+        },
+        USER: {
+          description: "Имя пользователя для подключения к базе данных.",
+          type: "string",
+          isOptional: false
+        },
+        PASSWORD: {
+          description: "Пароль для подключения к базе данных (закодированный в base64).",
+          type: "string",
+          isOptional: false,
+          isSecret: true
+        },
+        DB: {
+          description: "Название базы данных внутри системы управления базами данных.",
+          type: "string",
+          isOptional: false
+        }
+      };
+    }
+    getSharedSqlDbDestParams() {
+      return {
+        ...this.getSharedDestinationParams(),
+        TABLE: {
+          description: "Название таблицы.",
+          type: "string",
+          isOptional: false
+        },
+        ALLOW_DEST_CREATION: {
+          description: "Создавать ли таблицу, если она не существует. Если не будет установлено или false, то отсутствие таблицы приведёт к ошибке.",
+          type: "boolean",
+          isOptional: true,
+          defaultValue: false
+        },
+        PRIMARY_KEY_FROM_SOURCE: {
+          description: "Установит в таблице первичный ключ на основе источника (например, если источник — МК, то первичный ключ будет включать все колонки измерений). Если новый первичный ключ не будет равен тому, который уже есть в таблице, то таблица будет DROPнута и пересоздана!",
+          type: "boolean",
+          isOptional: true,
+          defaultValue: false
+        }
+      };
+    }
+    getDestTypeMapParams(defaultValue) {
+      return {
+        description: "Соответствие абстрактных типов и типов колонок приёмника. Указывать все не обязательно, указанные здесь перепишут те, которые установлены по умолчанию.",
+        type: "object",
+        isOptional: true,
+        objectValues: {
+          key: {
+            description: "Абстрактный тип.",
+            type: "string",
+            isOptional: false,
+            availableValues: AVAILABLE_ABSTRACT_TYPES
+          },
+          value: {
+            description: "Тип приёмника.",
+            type: "string",
+            isOptional: false
+          }
+        },
+        defaultValue
+      };
+    }
+    getDbConnectionParams(nestedObject) {
+      return {
+        description: "Параметры соединения с базой данных.",
+        type: "object",
+        isOptional: false,
+        nestedObject
+      };
+    }
+    getSchemaParamDescription() {
+      return {
+        description: "Схема, в которой расположена таблица в базе данных. Нужно указывать, если схема отличается от схемы по умолчанию для пользователя.",
+        type: "string" /* string */,
+        isOptional: true
+      };
+    }
+    getDestinationMysqlParams() {
+      return {
+        ...this.getSharedSqlDbDestParams(),
+        CONNECTION: this.getDbConnectionParams(this.getBasicSqlDbConnectionParams()),
+        TYPE_MAP: this.getDestTypeMapParams(MYSQL_Destination.typeMapDefault)
+      };
+    }
+    getDestinationMssqlParams() {
+      const CONNECTION_DESCRIPTION = {
+        ...this.getBasicSqlDbConnectionParams(),
+        REQUEST_TIMEOUT: {
+          description: "Таймаут выполнения запроса и таймаут соединения одновременно. Работает только с драйвером 'DBLIB'.",
+          type: "number",
+          isOptional: true,
+          checkValueFunc: this.checkPositiveNumber,
+          defaultValue: 30
+        },
+        DRIVER: {
+          description: "Драйвер для взаимодействия с базой данных.",
+          type: "string",
+          isOptional: true,
+          defaultValue: "DBLIB",
+          availableValues: ["DBLIB", "ODBC", "SQLSRV"]
+        }
+      };
+      return {
+        ...this.getSharedSqlDbDestParams(),
+        SCHEMA: this.getSchemaParamDescription(),
+        CONNECTION: this.getDbConnectionParams(CONNECTION_DESCRIPTION),
+        TYPE_MAP: this.getDestTypeMapParams(MSSQL_Destination.typeMapDefault)
+      };
+    }
+    getDestinationClickHouseParams() {
+      return {
+        ...this.getSharedSqlDbDestParams(),
+        CONNECTION: this.getDbConnectionParams(this.getBasicSqlDbConnectionParams()),
+        TYPE_MAP: this.getDestTypeMapParams(CLICKHOUSE_Destination.typeMapDefault),
+        TABLE_ENGINE: {
+          description: "Движок таблицы. Может быть записан с параметрами, если они необходимы. См. подробнее в описании https://clickhouse.com/docs/ru/engines/table-engines",
+          type: "string",
+          isOptional: false
+        }
+      };
+    }
+    getDestinationPostgresParams() {
+      return {
+        ...this.getSharedSqlDbDestParams(),
+        SCHEMA: this.getSchemaParamDescription(),
+        CONNECTION: this.getDbConnectionParams(this.getBasicSqlDbConnectionParams()),
+        TYPE_MAP: this.getDestTypeMapParams(POSTGRESQL_Destination.typeMapDefault)
+      };
+    }
+    getDestination() {
+      const DESTINATION_TYPES = Object.keys(DESTINATION());
+      return {
+        TYPE: {
+          description: "Тип приёмника.",
+          type: "string",
+          isOptional: false,
+          availableValues: DESTINATION_TYPES
+        },
+        PARAMS: {
+          description: "Настройки приёмника. Набор настроек зависит от значения TYPE.",
+          type: "object",
+          isOptional: false,
+          nestedObjectSwitch: this.commonNestedObjectSwitch,
+          nestedObject: {
+            "MYSQL": {
+              description: "Настройки приемника MYSQL.",
+              nestedObject: this.getDestinationMysqlParams()
+            },
+            "MSSQL": {
+              description: "Настройки приемника MSSQL.",
+              nestedObject: this.getDestinationMssqlParams()
+            },
+            "CLICKHOUSE": {
+              description: "Настройки приемника CLICKHOUSE.",
+              nestedObject: this.getDestinationClickHouseParams()
+            },
+            "POSTGRESQL": {
+              description: "Настройки приемника POSTGRESQL.",
+              nestedObject: this.getDestinationPostgresParams()
+            }
+          }
+        }
+      };
+    }
+    getRequest() {
+      return {
+        SRC: {
+          description: "Настройки источника структуры.",
+          type: "object",
+          isOptional: false,
+          nestedObject: this.getSource()
+        },
+        DEST: {
+          description: "Настройки приёмника структуры.",
+          type: "object",
+          isOptional: false,
+          nestedObject: this.getDestination()
+        }
+      };
+    }
+    build() {
+      return {
+        REQUESTS: {
+          description: "Здесь задаётся последовательность операций и их настройки.",
+          type: "array",
+          isOptional: false,
+          arrayElement: {
+            description: "Настройки одной операции.",
+            type: "object",
+            isOptional: false,
+            nestedObject: this.getRequest()
+          }
+        }
+      };
+    }
+  };
+
+  // cores/synchronize_structure/src/main.ts
+  var ENV = om.environment.get("ENV", null);
+  if (!ENV) {
+    throw new Error("ENV is not defined");
+  }
+  var runSyncronizeStructure = () => {
+    lockManager.setDefaultLockMode(0 /* UNLOCKED */);
+    ENV.REQUESTS.forEach((req) => {
+      new Macros(req).run();
+    });
+    return true;
+  };
+  runScript(
+    ENV,
+    EnvironmentManifest,
+    runSyncronizeStructure
+  );
+})();
